@@ -1,0 +1,155 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Register - EMSU{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-success text-white text-center py-4">
+                    <h3 class="mb-0">
+                        <i class="material-icons me-2">person_add</i>
+                        Create Account
+                    </h3>
+                    <p class="mb-0 opacity-75">Join the EMSU community</p>
+                </div>
+                <div class="card-body p-5">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label">First Name *</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" 
+                                       placeholder="First Name" required value="{{ request.POST.first_name }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name" class="form-label">Last Name *</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" 
+                                       placeholder="Last Name" required value="{{ request.POST.last_name }}">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="material-icons">email</i>
+                                </span>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       placeholder="Enter your email" required value="{{ request.POST.email }}">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="material-icons">lock</i>
+                                </span>
+                                <input type="password" class="form-control" id="password" name="password" 
+                                       placeholder="Enter your password" required minlength="6">
+                            </div>
+                            <small class="text-muted">Password must be at least 6 characters long</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="user_type" class="form-label">Account Type *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="material-icons">badge</i>
+                                </span>
+                                <select class="form-select" id="user_type" name="user_type" required onchange="toggleSchoolField()">
+                                    <option value="">Select your role</option>
+                                    {% for type_value, type_label in user_types %}
+                                        <option value="{{ type_value }}" 
+                                                {% if request.POST.user_type == type_value %}selected{% endif %}>
+                                            {{ type_label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4" id="school_field" style="display: none;">
+                            <label for="school" class="form-label">Select School</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="material-icons">school</i>
+                                </span>
+                                <select class="form-select" id="school" name="school">
+                                    <option value="">Choose your school</option>
+                                    {% for school in schools %}
+                                        <option value="{{ school.id }}" 
+                                                {% if request.POST.school == school.id|stringformat:"s" %}selected{% endif %}>
+                                            {{ school.name }} - {{ school.city }}, {{ school.state }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="text-muted">Don't see your school? Contact us to add it.</small>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the <a href="#" class="text-decoration-none">Terms of Service</a> 
+                                and <a href="#" class="text-decoration-none">Privacy Policy</a> *
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success w-100 py-2 mb-3">
+                            <i class="material-icons me-2">person_add</i>
+                            Create Account
+                        </button>
+                        
+                        <div class="text-center">
+                            <small class="text-muted">
+                                * Required fields
+                            </small>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center py-3">
+                    <span class="text-muted">Already have an account? </span>
+                    <a href="{% url 'login' %}" class="text-decoration-none">Sign in here</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleSchoolField() {
+    const userType = document.getElementById('user_type').value;
+    const schoolField = document.getElementById('school_field');
+    const schoolSelect = document.getElementById('school');
+    
+    // Show school field for student, teacher, and principal
+    if (['student', 'teacher', 'principal'].includes(userType)) {
+        schoolField.style.display = 'block';
+        schoolSelect.required = true;
+    } else {
+        schoolField.style.display = 'none';
+        schoolSelect.required = false;
+        schoolSelect.value = '';
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleSchoolField();
+});
+</script>
+{% endblock %}

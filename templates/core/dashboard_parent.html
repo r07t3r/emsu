@@ -1,0 +1,221 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Parent Dashboard - EMSU{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Welcome Section -->
+    <div class="gradient-bg rounded-2xl p-8 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">Welcome, {{ user.get_full_name }}</h1>
+                <p class="text-blue-100">Stay connected with your child's education</p>
+            </div>
+            <div class="hidden md:block">
+                <i class="fas fa-heart text-6xl opacity-20"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Children Overview -->
+    <div class="bg-white rounded-xl p-6 shadow-lg">
+        <h3 class="text-lg font-semibold mb-4">My Children</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for child in dashboard_data.children_data %}
+            <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors card-hover">
+                <div class="flex items-center space-x-3 mb-3">
+                    <img src="https://via.placeholder.com/40" alt="Child" class="w-10 h-10 rounded-full">
+                    <div>
+                        <h4 class="font-medium">{{ child.user.first_name }} {{ child.user.last_name }}</h4>
+                        <p class="text-sm text-gray-600">{{ child.current_class.name }}</p>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Attendance:</span>
+                        <span class="font-medium">95%</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Last Grade:</span>
+                        <span class="font-medium text-green-600">A</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white rounded-xl p-6 shadow-lg card-hover">
+            <div class="flex items-center">
+                <div class="bg-blue-100 p-3 rounded-full">
+                    <i class="fas fa-child text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-500 text-sm">Children</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ dashboard_data.children_count }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl p-6 shadow-lg card-hover">
+            <div class="flex items-center">
+                <div class="bg-green-100 p-3 rounded-full">
+                    <i class="fas fa-percentage text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-500 text-sm">Overall Attendance</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ dashboard_data.overall_attendance }}%</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl p-6 shadow-lg card-hover">
+            <div class="flex items-center">
+                <div class="bg-purple-100 p-3 rounded-full">
+                    <i class="fas fa-credit-card text-purple-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-500 text-sm">Fees Status</p>
+                    <p class="text-sm font-bold text-green-600">Up to Date</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl p-6 shadow-lg card-hover">
+            <div class="flex items-center">
+                <div class="bg-yellow-100 p-3 rounded-full">
+                    <i class="fas fa-star text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-500 text-sm">Average Grade</p>
+                    <p class="text-2xl font-bold text-gray-800">A-</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Academic Summary and Fee Status -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl p-6 shadow-lg">
+            <h3 class="text-lg font-semibold mb-4">Academic Summary</h3>
+            <canvas id="academicSummaryChart" width="400" height="200"></canvas>
+        </div>
+        
+        <div class="bg-white rounded-xl p-6 shadow-lg">
+            <h3 class="text-lg font-semibold mb-4">Fee Payment Status</h3>
+            <div class="space-y-3">
+                {% for fee in dashboard_data.fee_status %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="font-medium">{{ fee.child_name }}</p>
+                        <p class="text-sm text-gray-600">{{ fee.term }}</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-sm
+                        {% if fee.status == 'paid' %}bg-green-100 text-green-800
+                        {% elif fee.status == 'partial' %}bg-yellow-100 text-yellow-800
+                        {% else %}bg-red-100 text-red-800{% endif %}">
+                        {{ fee.status|title }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Communications and Events -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl p-6 shadow-lg">
+            <h3 class="text-lg font-semibold mb-4">Recent Communications</h3>
+            <div class="space-y-3">
+                {% for comm in dashboard_data.recent_communications %}
+                <div class="border-l-4 border-blue-400 pl-4 py-2">
+                    <p class="font-medium">{{ comm.subject }}</p>
+                    <p class="text-sm text-gray-600">From: {{ comm.sender }}</p>
+                    <p class="text-xs text-gray-500">{{ comm.created_at|date:"M d, Y" }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl p-6 shadow-lg">
+            <h3 class="text-lg font-semibold mb-4">Upcoming Events</h3>
+            <div class="space-y-3">
+                {% for event in dashboard_data.upcoming_events %}
+                <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <div class="bg-purple-100 p-2 rounded-lg">
+                        <i class="fas fa-calendar text-purple-600"></i>
+                    </div>
+                    <div>
+                        <p class="font-medium">{{ event.title }}</p>
+                        <p class="text-sm text-gray-600">{{ event.start_date|date:"M d, Y" }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-xl p-6 shadow-lg">
+        <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <button class="bg-blue-50 hover:bg-blue-100 text-blue-700 p-4 rounded-lg text-sm font-medium transition-colors card-hover">
+                <i class="fas fa-credit-card text-2xl mb-2"></i><br>
+                Pay Fees
+            </button>
+            <button class="bg-green-50 hover:bg-green-100 text-green-700 p-4 rounded-lg text-sm font-medium transition-colors card-hover">
+                <i class="fas fa-calendar-check text-2xl mb-2"></i><br>
+                View Attendance
+            </button>
+            <button class="bg-purple-50 hover:bg-purple-100 text-purple-700 p-4 rounded-lg text-sm font-medium transition-colors card-hover">
+                <i class="fas fa-chart-bar text-2xl mb-2"></i><br>
+                View Grades
+            </button>
+            <button class="bg-orange-50 hover:bg-orange-100 text-orange-700 p-4 rounded-lg text-sm font-medium transition-colors card-hover">
+                <i class="fas fa-envelope text-2xl mb-2"></i><br>
+                Send Message
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Academic Summary Chart
+const academicSummaryCtx = document.getElementById('academicSummaryChart').getContext('2d');
+new Chart(academicSummaryCtx, {
+    type: 'line',
+    data: {
+        labels: ['Term 1', 'Term 2', 'Term 3'],
+        datasets: [
+            {
+                label: 'Child 1',
+                data: [85, 88, 92],
+                borderColor: '#3B82F6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4
+            },
+            {
+                label: 'Child 2',
+                data: [78, 82, 85],
+                borderColor: '#10B981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,35 +1,39 @@
-from rest_framework.routers import DefaultRouter
-from .views import (
-    UserViewSet, SchoolViewSet, ClassViewSet,
-    SubjectViewSet, TeacherProfileViewSet,
-    StudentProfileViewSet, ParentProfileViewSet,
-    EnrollmentViewSet, AttendanceViewSet, GradeViewSet,
-    MessageViewSet, AnnouncementViewSet, NotificationViewSet,
-    PostViewSet, CommentViewSet,
-    ConnectionViewSet, TeacherGroupViewSet,
-    AnalyticsViewSet, DashboardViewSet
-)
 
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from . import views
 
 router = DefaultRouter()
-router.register(r'users', UserViewSet)
-router.register(r'schools', SchoolViewSet)
-router.register(r'classes', ClassViewSet)
-router.register(r'subjects', SubjectViewSet)
-router.register(r'teachers', TeacherProfileViewSet)
-router.register(r'students', StudentProfileViewSet)
-router.register(r'parents', ParentProfileViewSet)
-router.register(r'enrollments', EnrollmentViewSet)
-router.register(r'attendance',   AttendanceViewSet)
-router.register(r'grades',       GradeViewSet)
-router.register(r'messages',       MessageViewSet)
-router.register(r'announcements',  AnnouncementViewSet)
-router.register(r'notifications',  NotificationViewSet)
-router.register(r'posts',    PostViewSet)
-router.register(r'comments', CommentViewSet)
-router.register(r'connections', ConnectionViewSet)
-router.register(r'teacher-groups', TeacherGroupViewSet)
-router.register(r'analytics', AnalyticsViewSet, basename='analytics')
-router.register(r'dashboard', DashboardViewSet, basename='dashboard')
+router.register(r'users', views.UserViewSet)
+router.register(r'schools', views.SchoolViewSet)
+router.register(r'classes', views.ClassViewSet)
+router.register(r'subjects', views.SubjectViewSet)
+router.register(r'teacher-profiles', views.TeacherProfileViewSet)
+router.register(r'student-profiles', views.StudentProfileViewSet)
+router.register(r'parent-profiles', views.ParentProfileViewSet)
+router.register(r'principal-profiles', views.PrincipalProfileViewSet)
+router.register(r'enrollments', views.EnrollmentViewSet)
+router.register(r'attendance', views.AttendanceViewSet)
+router.register(r'grades', views.GradeViewSet)
+router.register(r'messages', views.MessageViewSet)
+router.register(r'announcements', views.AnnouncementViewSet)
+router.register(r'notifications', views.NotificationViewSet)
+router.register(r'posts', views.PostViewSet)
+router.register(r'comments', views.CommentViewSet)
+router.register(r'connections', views.ConnectionViewSet)
+router.register(r'teacher-groups', views.TeacherGroupViewSet)
 
-urlpatterns = router.urls
+urlpatterns = [
+    # API routes
+    path('api/', include(router.urls)),
+    path('api/dashboard-stats/', views.dashboard_stats, name='dashboard-stats'),
+    path('api/public-stats/', views.public_stats, name='public-stats'),
+    
+    # Template routes
+    path('', views.home, name='home'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('login/', views.login_view, name='login'),
+    path('register/', views.register_view, name='register'),
+    path('profile/', views.profile, name='profile'),
+    path('test/', views.test_view, name='test'),
+]

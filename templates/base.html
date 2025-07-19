@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}EMSU - Educational Management System{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .sidebar-gradient { background: linear-gradient(180deg, #1e293b 0%, #334155 100%); }
+        .text-gradient { background: linear-gradient(45deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    {% if user.is_authenticated %}
+        <!-- Sidebar -->
+        <div class="fixed inset-y-0 left-0 z-50 w-64 sidebar-gradient transform -translate-x-full md:translate-x-0 transition-transform duration-300" id="sidebar">
+            <div class="flex items-center justify-center h-16 bg-black bg-opacity-20">
+                <h1 class="text-xl font-bold text-white">EMSU Portal</h1>
+            </div>
+            <nav class="mt-8">
+                <div class="px-4 space-y-2">
+                    <a href="{% url 'dashboard' %}" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
+                        <i class="fas fa-home mr-3"></i>
+                        Dashboard
+                    </a>
+                    {% if user.user_type == 'student' %}
+                        <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
+                            <i class="fas fa-graduation-cap mr-3"></i>
+                            My Grades
+                        </a>
+                        <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
+                            <i class="fas fa-calendar-check mr-3"></i>
+                            Attendance
+                        </a>
+                    {% elif user.user_type == 'teacher' %}
+                        <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
+                            <i class="fas fa-users mr-3"></i>
+                            My Classes
+                        </a>
+                        <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
+                            <i class="fas fa-clipboard-list mr-3"></i>
+                            Grade Book
+                        </a>
+                    {% elif user.user_type == 'parent' %}
+                        <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
+                            <i class="fas fa-child mr-3"></i>
+                            My Children
+                        </a>
+                        <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
+                            <i class="fas fa-credit-card mr-3"></i>
+                            Fee Payments
+                        </a>
+                    {% endif %}
+                    <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
+                        <i class="fas fa-bell mr-3"></i>
+                        Notifications
+                    </a>
+                    <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
+                        <i class="fas fa-cog mr-3"></i>
+                        Settings
+                    </a>
+                </div>
+            </nav>
+            <div class="absolute bottom-0 w-full p-4">
+                <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-gray-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors">
+                    <i class="fas fa-sign-out-alt mr-3"></i>
+                    Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="md:ml-64">
+            <!-- Top Bar -->
+            <header class="bg-white shadow-sm border-b">
+                <div class="flex items-center justify-between px-6 py-4">
+                    <button class="md:hidden" onclick="toggleSidebar()">
+                        <i class="fas fa-bars text-gray-600"></i>
+                    </button>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <button class="flex items-center space-x-2 bg-gray-100 rounded-full px-4 py-2 hover:bg-gray-200 transition-colors">
+                                <img src="https://via.placeholder.com/32" alt="Profile" class="w-8 h-8 rounded-full">
+                                <span class="text-sm font-medium">{{ user.get_full_name }}</span>
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="p-6">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    {% else %}
+        
+    {% endif %}
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+    </script>
+</body>
+</html>

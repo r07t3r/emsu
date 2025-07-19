@@ -1,0 +1,90 @@
+
+{% extends 'base.html' %} {% load static %}
+
+{% block title %}Login - EMSU{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h3 class="mb-0">
+                        <i class="material-icons me-2">login</i>
+                        Welcome Back
+                    </h3>
+                    <p class="mb-0 opacity-75">Sign in to your EMSU account</p>
+                </div>
+                <div class="card-body p-5">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="material-icons">email</i>
+                                </span>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       placeholder="Enter your email" required 
+                                       value="{{ request.POST.email }}">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="material-icons">lock</i>
+                                </span>
+                                <input type="password" class="form-control" id="password" name="password" 
+                                       placeholder="Enter your password" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="remember">
+                                    <label class="form-check-label" for="remember">
+                                        Remember me
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <a href="#" class="text-decoration-none text-muted">
+                                    Forgot password?
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 py-2 mb-3">
+                            <i class="material-icons me-2">login</i>
+                            Sign In
+                        </button>
+                        
+                        <div class="text-center">
+                            <small class="text-muted">
+                                By signing in, you agree to our terms and conditions
+                            </small>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center py-3">
+                    <span class="text-muted">Don't have an account? </span>
+                    <a href="{% url 'register' %}" class="text-decoration-none">Create one here</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
