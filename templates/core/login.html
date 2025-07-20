@@ -1,90 +1,282 @@
 
-{% extends 'base.html' %} {% load static %}
+{% extends 'base.html' %}
 
 {% block title %}Login - EMSU{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-5">
-            <div class="card shadow-lg border-0">
-                <div class="card-header bg-primary text-white text-center py-4">
-                    <h3 class="mb-0">
-                        <i class="material-icons me-2">login</i>
-                        Welcome Back
-                    </h3>
-                    <p class="mb-0 opacity-75">Sign in to your EMSU account</p>
-                </div>
-                <div class="card-body p-5">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                    
-                    <form method="post">
-                        {% csrf_token %}
-                        
+<div class="min-vh-100 d-flex align-items-center justify-content-center py-5" style="background: var(--primary-gradient);">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+                <div class="card border-0 shadow-lg animate__animated animate__fadeInUp">
+                    <div class="card-header text-white text-center py-4" style="background: var(--dark-gradient);">
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="material-icons">email</i>
-                                </span>
-                                <input type="email" class="form-control" id="email" name="email" 
-                                       placeholder="Enter your email" required 
-                                       value="{{ request.POST.email }}">
-                            </div>
+                            <i class="fas fa-user-shield fa-3x"></i>
                         </div>
-                        
-                        <div class="mb-4">
-                            <label for="password" class="form-label">Password</label>
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="material-icons">lock</i>
-                                </span>
-                                <input type="password" class="form-control" id="password" name="password" 
-                                       placeholder="Enter your password" required>
+                        <h4 class="mb-0 fw-bold">Welcome Back</h4>
+                        <p class="mb-0 opacity-75">Sign in to your EMSU account</p>
+                    </div>
+                    
+                    <div class="card-body p-4 p-md-5">
+                        <form method="post" id="loginForm" novalidate>
+                            {% csrf_token %}
+                            
+                            <div class="mb-4">
+                                <label for="email" class="form-label fw-semibold">
+                                    <i class="fas fa-envelope me-2 text-muted"></i>Email Address
+                                </label>
+                                <input type="email" 
+                                       class="form-control form-control-lg" 
+                                       id="email" 
+                                       name="email" 
+                                       placeholder="Enter your email address"
+                                       required
+                                       autocomplete="email">
+                                <div class="invalid-feedback">Please enter a valid email address</div>
                             </div>
-                        </div>
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
+                            
+                            <div class="mb-4">
+                                <label for="password" class="form-label fw-semibold">
+                                    <i class="fas fa-lock me-2 text-muted"></i>Password
+                                </label>
+                                <div class="position-relative">
+                                    <input type="password" 
+                                           class="form-control form-control-lg" 
+                                           id="password" 
+                                           name="password" 
+                                           placeholder="Enter your password"
+                                           required
+                                           autocomplete="current-password">
+                                    <button type="button" 
+                                            class="btn btn-link position-absolute end-0 top-0 h-100 px-3 text-muted"
+                                            onclick="togglePassword('password', 'toggleIcon')">
+                                        <i class="fas fa-eye" id="toggleIcon"></i>
+                                    </button>
+                                </div>
+                                <div class="invalid-feedback">Password is required</div>
+                            </div>
+                            
+                            <div class="mb-4 d-flex justify-content-between align-items-center">
                                 <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" id="remember">
-                                    <label class="form-check-label" for="remember">
-                                        Remember me
+                                    <input class="form-check-input" type="checkbox" id="remember" name="remember">
+                                    <label class="form-check-label text-muted" for="remember">
+                                        <i class="fas fa-remember me-1"></i>Remember me
                                     </label>
                                 </div>
-                            </div>
-                            <div class="col-md-6 text-end">
-                                <a href="#" class="text-decoration-none text-muted">
-                                    Forgot password?
+                                <a href="#" class="text-decoration-none small" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">
+                                    <i class="fas fa-key me-1"></i>Forgot password?
                                 </a>
                             </div>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary w-100 py-2 mb-3">
-                            <i class="material-icons me-2">login</i>
-                            Sign In
-                        </button>
+                            
+                            <button type="submit" class="btn btn-primary btn-lg w-100 mb-3" id="loginBtn">
+                                <span class="btn-text">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                                </span>
+                                <span class="btn-loading d-none">
+                                    <span class="loading me-2"></span>Signing in...
+                                </span>
+                            </button>
+                        </form>
                         
                         <div class="text-center">
-                            <small class="text-muted">
-                                By signing in, you agree to our terms and conditions
+                            <p class="text-muted mb-0">
+                                Don't have an account? 
+                                <a href="{% url 'register' %}" class="text-decoration-none fw-semibold">Create one here</a>
+                            </p>
+                        </div>
+                        
+                        <!-- Social Login Options (Future) -->
+                        <div class="mt-4">
+                            <div class="text-center text-muted mb-3">
+                                <small>Or continue with</small>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-outline-secondary w-100" disabled>
+                                        <i class="fab fa-google me-2"></i>Google
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-outline-secondary w-100" disabled>
+                                        <i class="fab fa-microsoft me-2"></i>Microsoft
+                                    </button>
+                                </div>
+                            </div>
+                            <small class="text-muted d-block text-center mt-2">
+                                <i class="fas fa-info-circle me-1"></i>Social login coming soon
                             </small>
                         </div>
-                    </form>
+                    </div>
                 </div>
-                <div class="card-footer text-center py-3">
-                    <span class="text-muted">Don't have an account? </span>
-                    <a href="{% url 'register' %}" class="text-decoration-none">Create one here</a>
+                
+                <!-- Quick Access Cards -->
+                <div class="row g-3 mt-4">
+                    <div class="col-6">
+                        <div class="card border-0 bg-white bg-opacity-20 animate__animated animate__fadeInUp animate__delay-1s">
+                            <div class="card-body text-center py-3">
+                                <i class="fas fa-graduation-cap text-white fa-2x mb-2"></i>
+                                <p class="small mb-0 fw-semibold text-white">Student Portal</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card border-0 bg-white bg-opacity-20 animate__animated animate__fadeInUp animate__delay-2s">
+                            <div class="card-body text-center py-3">
+                                <i class="fas fa-chalkboard-teacher text-white fa-2x mb-2"></i>
+                                <p class="small mb-0 fw-semibold text-white">Teacher Dashboard</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Forgot Password Modal -->
+<div class="modal fade" id="forgotPasswordModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-key me-2"></i>Reset Password
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">Enter your email address and we'll send you instructions to reset your password.</p>
+                <form id="forgotPasswordForm">
+                    <div class="mb-3">
+                        <label for="resetEmail" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="resetEmail" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-paper-plane me-2"></i>Send Reset Instructions
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Toggle password visibility
+function togglePassword(inputId, iconId) {
+    const passwordInput = document.getElementById(inputId);
+    const toggleIcon = document.getElementById(iconId);
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.className = 'fas fa-eye-slash';
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.className = 'fas fa-eye';
+    }
+}
+
+// Real-time field validation
+function validateField(field) {
+    const value = field.value.trim();
+    let isValid = true;
+    
+    field.classList.remove('is-valid', 'is-invalid');
+    
+    if (field.hasAttribute('required') && !value) {
+        isValid = false;
+    } else if (field.type === 'email' && value) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) {
+            isValid = false;
+        }
+    }
+    
+    if (value) {
+        field.classList.add(isValid ? 'is-valid' : 'is-invalid');
+    }
+    
+    return isValid;
+}
+
+// Add validation to form fields
+document.querySelectorAll('#loginForm input').forEach(field => {
+    field.addEventListener('blur', () => validateField(field));
+    field.addEventListener('input', () => {
+        if (field.classList.contains('is-invalid')) {
+            validateField(field);
+        }
+    });
+});
+
+// Login form submission
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const btn = document.getElementById('loginBtn');
+    const btnText = btn.querySelector('.btn-text');
+    const btnLoading = btn.querySelector('.btn-loading');
+    const form = this;
+    
+    // Validate all fields
+    let isFormValid = true;
+    const fields = form.querySelectorAll('input[required]');
+    
+    fields.forEach(field => {
+        if (!validateField(field)) {
+            isFormValid = false;
+        }
+    });
+    
+    if (isFormValid) {
+        // Show loading state
+        btnText.classList.add('d-none');
+        btnLoading.classList.remove('d-none');
+        btn.disabled = true;
+        
+        // Submit form
+        form.submit();
+    }
+});
+
+// Forgot password form
+document.getElementById('forgotPasswordForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const email = document.getElementById('resetEmail').value.trim();
+    
+    if (!email) {
+        alert('Please enter your email address');
+        return;
+    }
+    
+    // For now, just show a success message
+    // In future, this will make an API call
+    alert('Password reset instructions will be sent to your email (feature coming soon)');
+    
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('forgotPasswordModal'));
+    modal.hide();
+});
+
+// Auto-focus email field and enable enter key navigation
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('email').focus();
+    
+    // Enable Enter key to move between fields
+    document.getElementById('email').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('password').focus();
+        }
+    });
+    
+    document.getElementById('password').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('loginBtn').click();
+        }
+    });
+});
+</script>
 {% endblock %}

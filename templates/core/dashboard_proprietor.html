@@ -1,0 +1,706 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Proprietor Dashboard - EMSU{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+    }
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    .quick-action-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+        border-radius: 15px;
+    }
+    .quick-action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 text-dark mb-1">Welcome back, {{ user.get_full_name }}!</h1>
+                    <p class="text-muted mb-0">Manage your educational empire from one powerful dashboard</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" onclick="openSchoolModal()">
+                        <i class="fas fa-plus me-2"></i>Add School
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="generateReport()">
+                        <i class="fas fa-chart-line me-2"></i>Generate Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon bg-white bg-opacity-20 text-white me-3">
+                        <i class="fas fa-school"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0" id="total-schools">{{ total_schools|default:0 }}</h3>
+                        <p class="mb-0 opacity-75">Schools</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon bg-white bg-opacity-20 text-white me-3">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0" id="total-students">{{ total_students|default:0 }}</h3>
+                        <p class="mb-0 opacity-75">Students</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon bg-white bg-opacity-20 text-white me-3">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0" id="total-teachers">{{ total_teachers|default:0 }}</h3>
+                        <p class="mb-0 opacity-75">Teachers</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                <div class="d-flex align-items-center">
+                    <div class="feature-icon bg-white bg-opacity-20 text-white me-3">
+                        <i class="fas fa-naira-sign"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0" id="total-revenue">₦0</h3>
+                        <p class="mb-0 opacity-75">Revenue</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-lg-2 col-md-4 col-6">
+                            <div class="quick-action-card card h-100 text-center p-3" onclick="openSchoolModal()">
+                                <div class="feature-icon bg-primary bg-opacity-10 mx-auto mb-2">
+                                    <i class="fas fa-plus text-primary"></i>
+                                </div>
+                                <h6 class="mb-0">Add School</h6>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-6">
+                            <div class="quick-action-card card h-100 text-center p-3" onclick="showMessages()">
+                                <div class="feature-icon bg-success bg-opacity-10 mx-auto mb-2">
+                                    <i class="fas fa-comments text-success"></i>
+                                </div>
+                                <h6 class="mb-0">Messages</h6>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-6">
+                            <div class="quick-action-card card h-100 text-center p-3" onclick="createPost()">
+                                <div class="feature-icon bg-info bg-opacity-10 mx-auto mb-2">
+                                    <i class="fas fa-bullhorn text-info"></i>
+                                </div>
+                                <h6 class="mb-0">Create Post</h6>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-6">
+                            <div class="quick-action-card card h-100 text-center p-3" onclick="viewReports()">
+                                <div class="feature-icon bg-warning bg-opacity-10 mx-auto mb-2">
+                                    <i class="fas fa-chart-bar text-warning"></i>
+                                </div>
+                                <h6 class="mb-0">Reports</h6>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-6">
+                            <div class="quick-action-card card h-100 text-center p-3" onclick="manageFinances()">
+                                <div class="feature-icon bg-danger bg-opacity-10 mx-auto mb-2">
+                                    <i class="fas fa-wallet text-danger"></i>
+                                </div>
+                                <h6 class="mb-0">Finances</h6>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-6">
+                            <div class="quick-action-card card h-100 text-center p-3" onclick="viewNotifications()">
+                                <div class="feature-icon bg-secondary bg-opacity-10 mx-auto mb-2">
+                                    <i class="fas fa-bell text-secondary"></i>
+                                </div>
+                                <h6 class="mb-0">Notifications</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="row">
+        <!-- Schools Overview -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">My Schools</h5>
+                        <button class="btn btn-sm btn-outline-primary" onclick="refreshSchools()">
+                            <i class="fas fa-refresh me-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="schools-list">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-3 text-muted">Loading schools...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div id="recent-activity">
+                        <div class="text-center py-3">
+                            <i class="fas fa-clock text-muted"></i>
+                            <p class="text-muted mt-2">Loading recent activity...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Notifications -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Notifications</h5>
+                        <span class="badge bg-primary" id="notification-count">0</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="notifications-list">
+                        <div class="text-center py-3">
+                            <i class="fas fa-bell-slash text-muted"></i>
+                            <p class="text-muted mt-2">No new notifications</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Summary -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">Financial Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- School Creation Modal -->
+<div class="modal fade" id="schoolModal" tabindex="-1" aria-labelledby="schoolModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="schoolModalLabel">Add New School</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="schoolForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="schoolName" class="form-label">School Name *</label>
+                                <input type="text" class="form-control" id="schoolName" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="schoolType" class="form-label">School Type *</label>
+                                <select class="form-control" id="schoolType" name="school_type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="primary">Primary School</option>
+                                    <option value="secondary">Secondary School</option>
+                                    <option value="both">Primary & Secondary</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="schoolEmail" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="schoolEmail" name="email" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="schoolPhone" class="form-label">Phone Number *</label>
+                                <input type="tel" class="form-control" id="schoolPhone" name="phone" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="schoolAddress" class="form-label">Address *</label>
+                        <textarea class="form-control" id="schoolAddress" name="address" rows="3" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="schoolCity" class="form-label">City *</label>
+                                <input type="text" class="form-control" id="schoolCity" name="city" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="schoolState" class="form-label">State *</label>
+                                <select class="form-control" id="schoolState" name="state" required>
+                                    <option value="">Select State</option>
+                                    <option value="Lagos">Lagos</option>
+                                    <option value="Abuja">Abuja (FCT)</option>
+                                    <option value="Kano">Kano</option>
+                                    <option value="Rivers">Rivers</option>
+                                    <option value="Oyo">Oyo</option>
+                                    <option value="Kaduna">Kaduna</option>
+                                    <!-- Add more states -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="ownershipType" class="form-label">Ownership Type *</label>
+                                <select class="form-control" id="ownershipType" name="ownership_type" required>
+                                    <option value="">Select Ownership</option>
+                                    <option value="private">Private</option>
+                                    <option value="public">Public</option>
+                                    <option value="mission">Mission</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="establishmentDate" class="form-label">Establishment Date</label>
+                                <input type="date" class="form-control" id="establishmentDate" name="establishment_date">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="schoolMotto" class="form-label">School Motto</label>
+                        <input type="text" class="form-control" id="schoolMotto" name="motto">
+                    </div>
+                    <div class="mb-3">
+                        <label for="schoolVision" class="form-label">Vision Statement</label>
+                        <textarea class="form-control" id="schoolVision" name="vision" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="schoolMission" class="form-label">Mission Statement</label>
+                        <textarea class="form-control" id="schoolMission" name="mission" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Create School
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+$(document).ready(function() {
+    loadDashboardData();
+    initializeCharts();
+    loadNotifications();
+    
+    // Auto-refresh every 5 minutes
+    setInterval(loadDashboardData, 300000);
+});
+
+function loadDashboardData() {
+    // Load dashboard statistics
+    fetch('/api/dashboard-stats/')
+        .then(response => response.json())
+        .then(data => {
+            updateDashboardStats(data);
+        })
+        .catch(error => console.error('Error loading dashboard data:', error));
+    
+    // Load schools
+    loadSchools();
+    loadRecentActivity();
+}
+
+function updateDashboardStats(data) {
+    if (data.total_schools) $('#total-schools').text(data.total_schools);
+    if (data.total_students) $('#total-students').text(data.total_students);
+    if (data.total_teachers) $('#total-teachers').text(data.total_teachers);
+    if (data.total_revenue) $('#total-revenue').text('₦' + data.total_revenue.toLocaleString());
+}
+
+function loadSchools() {
+    fetch('/api/schools/')
+        .then(response => response.json())
+        .then(data => {
+            displaySchools(data.results);
+        })
+        .catch(error => {
+            console.error('Error loading schools:', error);
+            $('#schools-list').html('<div class="text-center py-3"><i class="fas fa-exclamation-triangle text-warning"></i><p class="text-muted mt-2">Error loading schools</p></div>');
+        });
+}
+
+function displaySchools(schools) {
+    if (schools.length === 0) {
+        $('#schools-list').html(`
+            <div class="text-center py-5">
+                <i class="fas fa-school text-muted fa-3x mb-3"></i>
+                <h5 class="text-muted">No Schools Yet</h5>
+                <p class="text-muted">Start by adding your first school to the platform</p>
+                <button class="btn btn-primary" onclick="openSchoolModal()">
+                    <i class="fas fa-plus me-2"></i>Add First School
+                </button>
+            </div>
+        `);
+        return;
+    }
+
+    let html = '';
+    schools.forEach(school => {
+        html += `
+            <div class="card mb-3 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="card-title mb-1">${school.name}</h6>
+                            <p class="text-muted mb-1"><i class="fas fa-map-marker-alt me-1"></i>${school.city}, ${school.state}</p>
+                            <small class="text-muted">${school.school_type} • ${school.ownership_type}</small>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="d-flex justify-content-end gap-2">
+                                <span class="badge bg-success">${school.total_students} students</span>
+                                <span class="badge bg-info">${school.total_teachers} teachers</span>
+                            </div>
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewSchool('${school.id}')">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" onclick="manageSchool('${school.id}')">
+                                    <i class="fas fa-cog me-1"></i>Manage
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    $('#schools-list').html(html);
+}
+
+function loadRecentActivity() {
+    // Placeholder for recent activity
+    const activities = [
+        { type: 'school', message: 'New school registration approved', time: '2 hours ago', icon: 'fa-school' },
+        { type: 'user', message: '15 new student registrations', time: '4 hours ago', icon: 'fa-users' },
+        { type: 'payment', message: 'Fee payment received - ₦250,000', time: '1 day ago', icon: 'fa-naira-sign' },
+        { type: 'report', message: 'Monthly report generated', time: '2 days ago', icon: 'fa-chart-bar' }
+    ];
+
+    let html = '';
+    activities.forEach(activity => {
+        html += `
+            <div class="d-flex align-items-center mb-3">
+                <div class="feature-icon bg-primary bg-opacity-10 me-3" style="width: 40px; height: 40px;">
+                    <i class="fas ${activity.icon} text-primary"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <p class="mb-1">${activity.message}</p>
+                    <small class="text-muted">${activity.time}</small>
+                </div>
+            </div>
+        `;
+    });
+    $('#recent-activity').html(html);
+}
+
+function loadNotifications() {
+    fetch('/api/notifications/')
+        .then(response => response.json())
+        .then(data => {
+            displayNotifications(data.results);
+        })
+        .catch(error => console.error('Error loading notifications:', error));
+}
+
+function displayNotifications(notifications) {
+    const unreadCount = notifications.filter(n => !n.is_read).length;
+    $('#notification-count').text(unreadCount);
+
+    if (notifications.length === 0) {
+        $('#notifications-list').html(`
+            <div class="text-center py-3">
+                <i class="fas fa-bell-slash text-muted"></i>
+                <p class="text-muted mt-2">No notifications</p>
+            </div>
+        `);
+        return;
+    }
+
+    let html = '';
+    notifications.slice(0, 5).forEach(notification => {
+        html += `
+            <div class="d-flex align-items-start mb-3 ${!notification.is_read ? 'bg-light rounded p-2' : ''}">
+                <div class="feature-icon bg-${getNotificationColor(notification.notification_type)} bg-opacity-10 me-2" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                    <i class="fas ${getNotificationIcon(notification.notification_type)} text-${getNotificationColor(notification.notification_type)}"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="mb-1 small">${notification.title}</h6>
+                    <p class="mb-1 small text-muted">${notification.message}</p>
+                    <small class="text-muted">${formatDate(notification.created_at)}</small>
+                </div>
+            </div>
+        `;
+    });
+    $('#notifications-list').html(html);
+}
+
+function getNotificationColor(type) {
+    const colors = {
+        'info': 'primary',
+        'warning': 'warning',
+        'success': 'success',
+        'error': 'danger',
+        'reminder': 'info'
+    };
+    return colors[type] || 'primary';
+}
+
+function getNotificationIcon(type) {
+    const icons = {
+        'info': 'fa-info-circle',
+        'warning': 'fa-exclamation-triangle',
+        'success': 'fa-check-circle',
+        'error': 'fa-times-circle',
+        'reminder': 'fa-clock'
+    };
+    return icons[type] || 'fa-bell';
+}
+
+function initializeCharts() {
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Revenue',
+                data: [12000, 19000, 15000, 25000, 22000, 30000],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₦' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function openSchoolModal() {
+    $('#schoolModal').modal('show');
+}
+
+function refreshSchools() {
+    loadSchools();
+}
+
+// School form submission
+$('#schoolForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const schoolData = Object.fromEntries(formData);
+    
+    fetch('/api/schools/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(schoolData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.id) {
+            $('#schoolModal').modal('hide');
+            $('#schoolForm')[0].reset();
+            loadSchools();
+            showAlert('success', 'School created successfully!');
+        } else {
+            showAlert('error', 'Error creating school. Please check all fields.');
+        }
+    })
+    .catch(error => {
+        console.error('Error creating school:', error);
+        showAlert('error', 'Error creating school. Please try again.');
+    });
+});
+
+// Utility functions
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showAlert(type, message) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    $('body').prepend(alertHtml);
+    
+    setTimeout(() => {
+        $('.alert').alert('close');
+    }, 5000);
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now - date;
+    
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return Math.floor(diff / 60000) + ' minutes ago';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + ' hours ago';
+    return Math.floor(diff / 86400000) + ' days ago';
+}
+
+// Quick action functions
+function showMessages() {
+    window.location.href = '/messages/';
+}
+
+function createPost() {
+    window.location.href = '/posts/create/';
+}
+
+function viewReports() {
+    window.location.href = '/reports/';
+}
+
+function manageFinances() {
+    window.location.href = '/finances/';
+}
+
+function viewNotifications() {
+    window.location.href = '/notifications/';
+}
+
+function viewSchool(schoolId) {
+    window.location.href = `/schools/${schoolId}/`;
+}
+
+function manageSchool(schoolId) {
+    window.location.href = `/schools/${schoolId}/manage/`;
+}
+
+function generateReport() {
+    window.location.href = '/reports/generate/';
+}
+</script>
+{% endblock %}

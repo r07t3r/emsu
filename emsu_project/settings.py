@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import environ
 from datetime import timedelta
+from django.db import transaction
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,6 +20,26 @@ SECRET_KEY = env(
     default='django-insecure-development-key-change-in-production')
 DEBUG = True
 ALLOWED_HOSTS = ['*']  # Allow all hosts for development
+
+# CSRF and CORS configuration for Replit
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.replit.dev',
+    'https://*.repl.co',
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'http://0.0.0.0:5000'
+]
+
+CORS_ALLOWED_ORIGINS = [
+    'https://*.replit.dev',
+    'https://*.repl.co',
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'http://0.0.0.0:5000'
+]
+
+CORS_ALLOW_ALL_ORIGINS = True  # For development only
+CORS_ALLOW_CREDENTIALS = True
 
 # ──── APPLICATION CONFIGURATION ──────────────────────────────────────────
 AUTH_USER_MODEL = 'core.User'

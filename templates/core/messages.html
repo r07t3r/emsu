@@ -1,0 +1,733 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Messages - EMSU{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        height: calc(100vh - 200px);
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    .conversations-list {
+        height: 100%;
+        overflow-y: auto;
+        border-right: 1px solid #dee2e6;
+    }
+    .conversation-item {
+        padding: 1rem;
+        border-bottom: 1px solid #f8f9fa;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .conversation-item:hover {
+        background-color: #f8f9fa;
+    }
+    .conversation-item.active {
+        background-color: #e3f2fd;
+        border-left: 4px solid #2196f3;
+    }
+    .conversation-item.unread {
+        background-color: #fff3e0;
+    }
+    .chat-area {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    .chat-header {
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+    }
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+    }
+    .message {
+        margin-bottom: 1rem;
+        display: flex;
+    }
+    .message.own {
+        justify-content: flex-end;
+    }
+    .message-bubble {
+        max-width: 70%;
+        padding: 0.75rem 1rem;
+        border-radius: 18px;
+        word-wrap: break-word;
+    }
+    .message.own .message-bubble {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+    .message:not(.own) .message-bubble {
+        background-color: #e9ecef;
+        color: #333;
+        border-bottom-left-radius: 4px;
+    }
+    .message-info {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    .chat-input {
+        padding: 1rem;
+        border-top: 1px solid #dee2e6;
+        background-color: white;
+    }
+    .typing-indicator {
+        padding: 0.5rem 1rem;
+        font-style: italic;
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+    .urgent-message {
+        border-left: 4px solid #dc3545;
+        background-color: #fff5f5;
+    }
+    .profile-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .online-indicator {
+        width: 12px;
+        height: 12px;
+        background-color: #28a745;
+        border-radius: 50%;
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        border: 2px solid white;
+    }
+    .search-box {
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .compose-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        transition: transform 0.3s ease;
+    }
+    .compose-btn:hover {
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="h3 text-dark mb-1">Messages</h2>
+            <p class="text-muted mb-0">Communicate with teachers, students, and parents</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm chat-container">
+                <div class="row h-100 g-0">
+                    <!-- Conversations List -->
+                    <div class="col-md-4">
+                        <div class="conversations-list">
+                            <!-- Search Box -->
+                            <div class="search-box">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="searchConversations" 
+                                           placeholder="Search conversations...">
+                                    <button class="btn btn-outline-secondary" type="button">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Conversations -->
+                            <div id="conversationsList">
+                                <div class="text-center py-5">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-3 text-muted">Loading conversations...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Area -->
+                    <div class="col-md-8">
+                        <div class="chat-area">
+                            <div id="chatWelcome" class="d-flex align-items-center justify-content-center h-100">
+                                <div class="text-center">
+                                    <i class="fas fa-comments fa-5x text-muted mb-4"></i>
+                                    <h4 class="text-muted">Select a conversation to start messaging</h4>
+                                    <p class="text-muted">Choose from your existing conversations or start a new one</p>
+                                    <button class="btn btn-primary" onclick="openComposeModal()">
+                                        <i class="fas fa-plus me-2"></i>New Message
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="chatContainer" class="d-none">
+                                <!-- Chat Header -->
+                                <div class="chat-header">
+                                    <div class="d-flex align-items-center">
+                                        <div class="position-relative me-3">
+                                            <img id="chatAvatar" src="" alt="Avatar" class="profile-avatar">
+                                            <div class="online-indicator d-none" id="onlineIndicator"></div>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-0" id="chatName">Name</h6>
+                                            <small class="text-muted" id="chatStatus">Online</small>
+                                        </div>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                    type="button" data-bs-toggle="dropdown">
+                                                <i class="fas fa-ellipsis-v"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#"><i class="fas fa-info-circle me-2"></i>View Profile</a></li>
+                                                <li><a class="dropdown-item" href="#"><i class="fas fa-archive me-2"></i>Archive</a></li>
+                                                <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Chat Messages -->
+                                <div class="chat-messages" id="chatMessages">
+                                    <!-- Messages will be loaded here -->
+                                </div>
+
+                                <!-- Typing Indicator -->
+                                <div class="typing-indicator d-none" id="typingIndicator">
+                                    <span id="typingUser">Someone</span> is typing...
+                                </div>
+
+                                <!-- Chat Input -->
+                                <div class="chat-input">
+                                    <form id="messageForm">
+                                        <div class="input-group">
+                                            <button class="btn btn-outline-secondary" type="button" 
+                                                    data-bs-toggle="tooltip" title="Attach file">
+                                                <i class="fas fa-paperclip"></i>
+                                            </button>
+                                            <input type="text" class="form-control" id="messageInput" 
+                                                   placeholder="Type your message..." autocomplete="off">
+                                            <button class="btn btn-outline-secondary" type="button" 
+                                                    data-bs-toggle="tooltip" title="Mark as urgent" id="urgentBtn">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                            </button>
+                                            <button class="btn btn-primary" type="submit">
+                                                <i class="fas fa-paper-plane"></i>
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Compose Message Modal -->
+<div class="modal fade" id="composeModal" tabindex="-1" aria-labelledby="composeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="composeModalLabel">New Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="composeForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="recipients" class="form-label">To:</label>
+                        <select class="form-control" id="recipients" name="recipients" multiple required>
+                            <!-- Recipients will be loaded dynamically -->
+                        </select>
+                        <div class="form-text">Search and select recipients</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="messageSubject" class="form-label">Subject:</label>
+                        <input type="text" class="form-control" id="messageSubject" name="subject">
+                    </div>
+                    <div class="mb-3">
+                        <label for="messageBody" class="form-label">Message:</label>
+                        <textarea class="form-control" id="messageBody" name="body" rows="5" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isUrgent" name="is_urgent">
+                            <label class="form-check-label" for="isUrgent">
+                                Mark as urgent
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-2"></i>Send Message
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Compose Button -->
+<button class="compose-btn d-md-none" onclick="openComposeModal()" 
+        data-bs-toggle="tooltip" title="New Message">
+    <i class="fas fa-plus"></i>
+</button>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentChatUser = null;
+let socket = null;
+let isUrgent = false;
+let typingTimer;
+
+$(document).ready(function() {
+    initializeMessaging();
+    loadConversations();
+    
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+function initializeMessaging() {
+    // Initialize WebSocket connection
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/chat/`;
+    
+    socket = new WebSocket(wsUrl);
+    
+    socket.onopen = function(event) {
+        console.log('WebSocket connected');
+    };
+    
+    socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        handleWebSocketMessage(data);
+    };
+    
+    socket.onclose = function(event) {
+        console.log('WebSocket disconnected');
+        // Attempt to reconnect after 3 seconds
+        setTimeout(initializeMessaging, 3000);
+    };
+    
+    socket.onerror = function(error) {
+        console.error('WebSocket error:', error);
+    };
+}
+
+function handleWebSocketMessage(data) {
+    switch(data.type) {
+        case 'new_message':
+            handleNewMessage(data.message);
+            break;
+        case 'typing_indicator':
+            handleTypingIndicator(data);
+            break;
+        case 'message_read':
+            handleMessageRead(data.message_id);
+            break;
+        case 'error':
+            showAlert('error', data.message);
+            break;
+    }
+}
+
+function handleNewMessage(message) {
+    // Update conversations list
+    loadConversations();
+    
+    // If this is the current chat, add message to chat
+    if (currentChatUser && message.sender.id === currentChatUser) {
+        appendMessage(message, false);
+        markAsRead(message.id);
+    }
+    
+    // Show notification
+    if (Notification.permission === 'granted') {
+        new Notification(`New message from ${message.sender.name}`, {
+            body: message.body.substring(0, 100),
+            icon: '/static/images/logo.png'
+        });
+    }
+}
+
+function handleTypingIndicator(data) {
+    if (currentChatUser && data.user.id === currentChatUser) {
+        const indicator = $('#typingIndicator');
+        const userSpan = $('#typingUser');
+        
+        userSpan.text(data.user.name);
+        
+        if (data.is_typing) {
+            indicator.removeClass('d-none');
+        } else {
+            indicator.addClass('d-none');
+        }
+    }
+}
+
+function loadConversations() {
+    fetch('/api/messages/conversations/')
+        .then(response => response.json())
+        .then(conversations => {
+            displayConversations(conversations);
+        })
+        .catch(error => {
+            console.error('Error loading conversations:', error);
+            $('#conversationsList').html(`
+                <div class="text-center py-5">
+                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                    <p class="text-muted mt-2">Error loading conversations</p>
+                </div>
+            `);
+        });
+}
+
+function displayConversations(conversations) {
+    if (conversations.length === 0) {
+        $('#conversationsList').html(`
+            <div class="text-center py-5">
+                <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No Conversations</h5>
+                <p class="text-muted">Start a new conversation to get started</p>
+                <button class="btn btn-primary" onclick="openComposeModal()">
+                    <i class="fas fa-plus me-2"></i>New Message
+                </button>
+            </div>
+        `);
+        return;
+    }
+
+    let html = '<div class="search-box"><div class="input-group"><input type="text" class="form-control" id="searchConversations" placeholder="Search conversations..."><button class="btn btn-outline-secondary" type="button"><i class="fas fa-search"></i></button></div></div>';
+    
+    conversations.forEach(conv => {
+        const unreadBadge = conv.unread_count > 0 ? 
+            `<span class="badge bg-primary rounded-pill">${conv.unread_count}</span>` : '';
+        
+        const urgentClass = conv.last_message.is_urgent ? 'urgent-message' : '';
+        const unreadClass = conv.unread_count > 0 ? 'unread' : '';
+        
+        html += `
+            <div class="conversation-item ${urgentClass} ${unreadClass}" 
+                 onclick="openChat('${conv.participant.id}', '${conv.participant.name}', '${conv.participant.profile_picture || ''}')">
+                <div class="d-flex align-items-center">
+                    <div class="position-relative me-3">
+                        <img src="${conv.participant.profile_picture || '/static/images/default-avatar.png'}" 
+                             alt="Avatar" class="profile-avatar">
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h6 class="mb-0">${conv.participant.name}</h6>
+                            <small class="text-muted">${formatDate(conv.last_message.created_at)}</small>
+                        </div>
+                        <p class="mb-0 text-muted small">${conv.last_message.body}</p>
+                    </div>
+                    ${unreadBadge}
+                </div>
+            </div>
+        `;
+    });
+    
+    $('#conversationsList').html(html);
+}
+
+function openChat(userId, userName, userAvatar) {
+    currentChatUser = userId;
+    
+    // Update chat header
+    $('#chatName').text(userName);
+    $('#chatAvatar').attr('src', userAvatar || '/static/images/default-avatar.png');
+    
+    // Show chat container
+    $('#chatWelcome').addClass('d-none');
+    $('#chatContainer').removeClass('d-none');
+    
+    // Mark conversation as active
+    $('.conversation-item').removeClass('active');
+    $(`.conversation-item[onclick*="${userId}"]`).addClass('active');
+    
+    // Load messages
+    loadChatMessages(userId);
+}
+
+function loadChatMessages(userId) {
+    $('#chatMessages').html('<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div></div>');
+    
+    fetch(`/api/messages/conversation/${userId}/`)
+        .then(response => response.json())
+        .then(messages => {
+            displayChatMessages(messages);
+        })
+        .catch(error => {
+            console.error('Error loading messages:', error);
+            $('#chatMessages').html('<div class="text-center py-3 text-danger">Error loading messages</div>');
+        });
+}
+
+function displayChatMessages(messages) {
+    let html = '';
+    
+    messages.forEach(message => {
+        const isOwn = message.is_own;
+        const urgentClass = message.is_urgent ? 'urgent-message' : '';
+        
+        html += `
+            <div class="message ${isOwn ? 'own' : ''}" data-message-id="${message.id}">
+                <div class="message-bubble ${urgentClass}">
+                    ${message.subject ? `<strong>${message.subject}</strong><br>` : ''}
+                    ${message.body}
+                    <div class="message-info">
+                        ${formatDateTime(message.created_at)}
+                        ${message.is_urgent ? '<i class="fas fa-exclamation-triangle text-warning ms-1"></i>' : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    $('#chatMessages').html(html);
+    scrollToBottom();
+}
+
+function appendMessage(message, isOwn) {
+    const urgentClass = message.is_urgent ? 'urgent-message' : '';
+    
+    const html = `
+        <div class="message ${isOwn ? 'own' : ''}" data-message-id="${message.id}">
+            <div class="message-bubble ${urgentClass}">
+                ${message.subject ? `<strong>${message.subject}</strong><br>` : ''}
+                ${message.body}
+                <div class="message-info">
+                    ${formatDateTime(message.created_at)}
+                    ${message.is_urgent ? '<i class="fas fa-exclamation-triangle text-warning ms-1"></i>' : ''}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $('#chatMessages').append(html);
+    scrollToBottom();
+}
+
+function scrollToBottom() {
+    const chatMessages = document.getElementById('chatMessages');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Message sending
+$('#messageForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const messageText = $('#messageInput').val().trim();
+    if (!messageText || !currentChatUser) return;
+    
+    const messageData = {
+        type: 'send_message',
+        recipients: [currentChatUser],
+        body: messageText,
+        is_urgent: isUrgent
+    };
+    
+    // Send via WebSocket
+    socket.send(JSON.stringify(messageData));
+    
+    // Add to chat immediately
+    const tempMessage = {
+        id: 'temp_' + Date.now(),
+        body: messageText,
+        created_at: new Date().toISOString(),
+        is_urgent: isUrgent
+    };
+    
+    appendMessage(tempMessage, true);
+    
+    // Clear input
+    $('#messageInput').val('');
+    isUrgent = false;
+    $('#urgentBtn').removeClass('btn-warning').addClass('btn-outline-secondary');
+});
+
+// Typing indicator
+$('#messageInput').on('input', function() {
+    if (currentChatUser && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+            type: 'typing',
+            recipient_id: currentChatUser,
+            is_typing: true
+        }));
+        
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+            socket.send(JSON.stringify({
+                type: 'typing',
+                recipient_id: currentChatUser,
+                is_typing: false
+            }));
+        }, 1000);
+    }
+});
+
+// Urgent message toggle
+$('#urgentBtn').on('click', function() {
+    isUrgent = !isUrgent;
+    if (isUrgent) {
+        $(this).removeClass('btn-outline-secondary').addClass('btn-warning');
+    } else {
+        $(this).removeClass('btn-warning').addClass('btn-outline-secondary');
+    }
+});
+
+// Compose modal functions
+function openComposeModal() {
+    loadRecipients();
+    $('#composeModal').modal('show');
+}
+
+function loadRecipients() {
+    fetch('/api/users/search/?q=a') // Get some users
+        .then(response => response.json())
+        .then(users => {
+            const select = $('#recipients');
+            select.empty();
+            
+            users.forEach(user => {
+                select.append(`
+                    <option value="${user.id}">${user.name} (${user.user_type})</option>
+                `);
+            });
+        });
+}
+
+$('#composeForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const recipients = Array.from(formData.getAll('recipients'));
+    
+    const messageData = {
+        recipients: recipients,
+        subject: formData.get('subject'),
+        body: formData.get('body'),
+        is_urgent: formData.get('is_urgent') === 'on'
+    };
+    
+    fetch('/api/messages/send/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(messageData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message_id) {
+            $('#composeModal').modal('hide');
+            $('#composeForm')[0].reset();
+            showAlert('success', 'Message sent successfully!');
+            loadConversations();
+        } else {
+            showAlert('error', data.error || 'Failed to send message');
+        }
+    })
+    .catch(error => {
+        console.error('Error sending message:', error);
+        showAlert('error', 'Failed to send message');
+    });
+});
+
+function markAsRead(messageId) {
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+            type: 'mark_read',
+            message_id: messageId
+        }));
+    }
+}
+
+// Utility functions
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now - date;
+    
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return Math.floor(diff / 60000) + 'm';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + 'h';
+    if (diff < 604800000) return Math.floor(diff / 86400000) + 'd';
+    return date.toLocaleDateString();
+}
+
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString();
+}
+
+function showAlert(type, message) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
+             style="top: 20px; right: 20px; z-index: 9999;" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    $('body').append(alertHtml);
+    
+    setTimeout(() => {
+        $('.alert').alert('close');
+    }, 5000);
+}
+
+// Request notification permission
+if (Notification.permission === 'default') {
+    Notification.requestPermission();
+}
+</script>
+{% endblock %}

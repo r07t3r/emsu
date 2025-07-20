@@ -1,11 +1,11 @@
-
 from rest_framework import viewsets, permissions, status, filters
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Count, Avg
 from django.utils import timezone
@@ -13,17 +13,317 @@ from django.core.paginator import Paginator
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.utils.decorators import method_decorator
+from django.core.exceptions import ValidationError
+from django.contrib.auth.password_validation import validate_password
+from django.db import transaction
+import json
 import logging
 
-from .models import *
+from .models import (
+    User, School, StudentProfile, TeacherProfile, 
+    ParentProfile, PrincipalProfile, ProprietorProfile,
+    Class, Subject, Enrollment, Attendance, Grade, Message,
+    Announcement, Notification, Post, Comment, Connection, TeacherGroup
+)
 from .serializers import *
 from .utils.notifications import create_notification
 from django.http import HttpResponse
 
 def test_view(request):
     return HttpResponse("<h1>This is a test - if you see this, views are working</h1>")
+
 logger = logging.getLogger(__name__)
 
+
+def home_view(request):
+    """
+    Home page view
+    """
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    return render(request, 'core/home.html')
+
+
+def register_view(request):
+    """
+    Registration page view with enhanced validation
+    """
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+
+    # Get all schools for the registration form
+    schools = School.objects.filter(is_active=True).order_by('name')
+
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                first_name = request.POST.get('first_name', '').strip()
+                last_name = request.POST.get('last_name', '').strip()
+                email = request.POST.get('email', '').strip().lower()
+                password = request.POST.get('password', '')
+                user_type = request.POST.get('user_type', '')
+                school_id = request.POST.get('school', '')
+
+                # Comprehensive validation
+                errors = []
+
+                if not first_name:
+                    errors.append('First name is required')
+                elif len(first_name) < 2:
+                    errors.append('First name must be at least 2 characters')
+
+                if not last_name:
+                    errors.append('Last name is required')
+                elif len(last_name) < 2:
+                    errors.append('Last name must be at least 2 characters')
+
+                if not email:
+                    errors.append('Email is required')
+                elif '@' not in email or '.' not in email:
+                    errors.append('Please enter a valid email address')
+                elif User.objects.filter(email=email).exists():
+                    errors.append('A user with this email already exists')
+
+                if not password:
+                    errors.append('Password is required')
+                else:
+                    try:
+                        validate_password(password)
+                    except ValidationError as e:
+                        errors.extend(e.messages)
+
+                if not user_type:
+                    errors.append('Please select an account type')
+                elif user_type not in dict(User.USER_TYPES).keys():
+                    errors.append('Invalid account type selected')
+
+                # School validation for certain user types
+                if user_type in ['student', 'teacher', 'principal']:
+                    if not school_id:
+                        errors.append('Please select a school')
+                    elif not School.objects.filter(id=school_id, is_active=True).exists():
+                        errors.append('Invalid school selected')
+
+                if errors:
+                    for error in errors:
+                        messages.error(request, error)
+                    context = {
+                        'schools': schools,
+                        'user_types': User.USER_TYPES,
+                        'form_data': request.POST
+                    }
+                    return render(request, 'core/register.html', context)
+
+                # Create the user
+                user = User.objects.create_user(
+                    email=email,
+                    password=password,
+                    first_name=first_name,
+                    last_name=last_name,
+                    user_type=user_type
+                )
+
+                # Create profile based on user type
+                school = None
+                if school_id:
+                    school = get_object_or_404(School, id=school_id, is_active=True)
+
+                if user_type == 'student' and school:
+                    StudentProfile.objects.create(
+                        user=user,
+                        school=school,
+                        admission_number=f"STU{user.id.hex[:8].upper()}",
+                        date_of_birth=timezone.now().date(),  # Temporary - should be from form
+                        gender='male',  # Temporary - should be from form
+                        address='',  # Temporary - should be from form
+                        state_of_origin='',  # Temporary - should be from form
+                        admission_date=timezone.now().date(),
+                        guardian_name='',  # Temporary - should be from form
+                        guardian_phone='',  # Temporary - should be from form
+                        emergency_contact='',  # Temporary - should be from form
+                        emergency_phone=''  # Temporary - should be from form
+                    )
+                elif user_type == 'teacher' and school:
+                    TeacherProfile.objects.create(
+                        user=user,
+                        school=school,
+                        employee_id=f"TCH{user.id.hex[:8].upper()}"
+                    )
+                elif user_type == 'parent':
+                    ParentProfile.objects.create(user=user)
+                elif user_type == 'principal' and school:
+                    PrincipalProfile.objects.create(
+                        user=user,
+                        school=school,
+                        employee_id=f"PRI{user.id.hex[:8].upper()}"
+                    )
+                elif user_type == 'proprietor':
+                    ProprietorProfile.objects.create(user=user)
+
+                # Log successful registration
+                logger.info(f"New user registered: {user.email} ({user.user_type})")
+
+                messages.success(request, 'Account created successfully! Please log in to continue.')
+                return redirect('login')
+
+        except Exception as e:
+            logger.error(f"Registration error: {str(e)}")
+            messages.error(request, 'Registration failed. Please try again.')
+
+    context = {
+        'schools': schools,
+        'user_types': User.USER_TYPES
+    }
+    return render(request, 'core/register.html', context)
+
+
+def login_view(request):
+    """
+    Login page view with enhanced security
+    """
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip().lower()
+        password = request.POST.get('password', '')
+        remember_me = request.POST.get('remember')
+
+        if not email or not password:
+            messages.error(request, 'Please enter both email and password')
+            return render(request, 'core/login.html')
+
+        try:
+            user = authenticate(request, email=email, password=password)
+            if user:
+                if not user.is_active:
+                    messages.error(request, 'Your account is disabled. Please contact support.')
+                    return render(request, 'core/login.html')
+
+                login(request, user)
+
+                # Set session expiry based on remember me
+                if not remember_me:
+                    request.session.set_expiry(0)  # Session expires when browser closes
+                else:
+                    request.session.set_expiry(1209600)  # 2 weeks
+
+                # Log successful login
+                logger.info(f"User logged in: {user.email}")
+
+                # Redirect to next URL or dashboard
+                next_url = request.GET.get('next', 'dashboard')
+                messages.success(request, f'Welcome back, {user.get_full_name()}!')
+                return redirect(next_url)
+            else:
+                messages.error(request, 'Invalid email or password. Please try again.')
+                logger.warning(f"Failed login attempt for email: {email}")
+
+        except Exception as e:
+            logger.error(f"Login error: {str(e)}")
+            messages.error(request, 'Login failed. Please try again.')
+
+    return render(request, 'core/login.html')
+
+
+def logout_view(request):
+    """
+    Enhanced logout view
+    """
+    user_name = request.user.get_full_name() if request.user.is_authenticated else 'User'
+    logout(request)
+    messages.success(request, f'Goodbye {user_name}! You have been logged out successfully.')
+    return redirect('home')
+
+
+@login_required
+def dashboard_view(request):
+    """
+    Main dashboard view that routes users based on their type
+    """
+    user = request.user
+
+    if user.user_type == 'student':
+        return render(request, 'core/dashboard_student.html')
+    elif user.user_type == 'teacher':
+        return render(request, 'core/dashboard_teacher.html')
+    elif user.user_type == 'parent':
+        return render(request, 'core/dashboard_parent.html')
+    elif user.user_type == 'principal':
+        return render(request, 'core/dashboard_principal.html')
+    elif user.user_type == 'proprietor':
+        return render(request, 'core/dashboard_proprietor.html')
+    else:
+        messages.error(request, 'Invalid user type. Please contact support.')
+        return redirect('home')
+
+
+@login_required
+def profile_view(request):
+    """
+    User profile view with edit capabilities
+    """
+    if request.method == 'POST':
+        try:
+            user = request.user
+            user.first_name = request.POST.get('first_name', '').strip()
+            user.last_name = request.POST.get('last_name', '').strip()
+
+            if request.FILES.get('profile_picture'):
+                user.profile_picture = request.FILES['profile_picture']
+
+            user.save()
+            messages.success(request, 'Profile updated successfully!')
+
+        except Exception as e:
+            logger.error(f"Profile update error: {str(e)}")
+            messages.error(request, 'Failed to update profile. Please try again.')
+
+    return render(request, 'core/profile.html')
+
+
+# AJAX endpoints for enhanced UX
+@csrf_exempt
+@require_http_methods(["POST"])
+def check_email_availability(request):
+    """
+    Check if email is available for registration
+    """
+    try:
+        data = json.loads(request.body)
+        email = data.get('email', '').strip().lower()
+
+        if not email:
+            return JsonResponse({'available': False, 'message': 'Email is required'})
+
+        if '@' not in email or '.' not in email:
+            return JsonResponse({'available': False, 'message': 'Invalid email format'})
+
+        exists = User.objects.filter(email=email).exists()
+
+        return JsonResponse({
+            'available': not exists,
+            'message': 'Email is already taken' if exists else 'Email is available'
+        })
+
+    except Exception as e:
+        logger.error(f"Email check error: {str(e)}")
+        return JsonResponse({'available': False, 'message': 'Error checking email'})
+
+
+@require_http_methods(["GET"])
+def get_schools(request):
+    """
+    Get schools list for dynamic loading
+    """
+    try:
+        schools = School.objects.filter(is_active=True).values('id', 'name', 'city', 'state')
+        return JsonResponse({'schools': list(schools)})
+    except Exception as e:
+        logger.error(f"Schools fetch error: {str(e)}")
+        return JsonResponse({'schools': []})
 
 # API ViewSets
 class UserViewSet(viewsets.ModelViewSet):
@@ -466,7 +766,6 @@ class TeacherGroupViewSet(viewsets.ModelViewSet):
             return TeacherGroup.objects.filter(members__user=user)
         return TeacherGroup.objects.all()
 
-
 # Template Views
 def home(request):
     """
@@ -572,118 +871,7 @@ def dashboard(request):
     return redirect('home')
 
 
-def login_view(request):
-    """
-    Login page view
-    """
-    if request.user.is_authenticated:
-        return redirect('dashboard')
-        
-    if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-
-        if email and password:
-            user = authenticate(request, email=email, password=password)
-            if user:
-                login(request, user)
-                next_url = request.GET.get('next', 'dashboard')
-                return redirect(next_url)
-            else:
-                messages.error(request, 'Invalid email or password')
-        else:
-            messages.error(request, 'Please enter both email and password')
-
-    return render(request, 'core/login.html')
-
-
-def register_view(request):
-    """
-    Registration page view
-    """
-    if request.user.is_authenticated:
-        return redirect('dashboard')
-        
-    # Get all schools for the registration form
-    schools = School.objects.filter(is_active=True).order_by('name')
-    
-    if request.method == 'POST':
-        try:
-            first_name = request.POST.get('first_name')
-            last_name = request.POST.get('last_name')
-            email = request.POST.get('email')
-            password = request.POST.get('password')
-            user_type = request.POST.get('user_type')
-            school_id = request.POST.get('school')
-            
-            # Basic validation
-            if not all([first_name, last_name, email, password, user_type]):
-                messages.error(request, 'All fields are required')
-                return render(request, 'core/register.html', {'schools': schools})
-            
-            # Check if user already exists
-            if User.objects.filter(email=email).exists():
-                messages.error(request, 'A user with this email already exists')
-                return render(request, 'core/register.html', {'schools': schools})
-            
-            # Create the user
-            user = User.objects.create_user(
-                email=email,
-                password=password,
-                first_name=first_name,
-                last_name=last_name,
-                user_type=user_type
-            )
-            
-            # Create profile based on user type
-            school = None
-            if school_id:
-                school = get_object_or_404(School, id=school_id)
-            
-            if user_type == 'student' and school:
-                StudentProfile.objects.create(
-                    user=user,
-                    school=school,
-                    student_id=f"STU{user.id.hex[:8].upper()}"
-                )
-            elif user_type == 'teacher' and school:
-                TeacherProfile.objects.create(
-                    user=user,
-                    school=school,
-                    employee_id=f"TCH{user.id.hex[:8].upper()}"
-                )
-            elif user_type == 'parent':
-                ParentProfile.objects.create(user=user)
-            elif user_type == 'principal' and school:
-                PrincipalProfile.objects.create(
-                    user=user,
-                    school=school
-                )
-            
-            messages.success(request, 'Account created successfully! Please log in.')
-            return redirect('login')
-            
-        except Exception as e:
-            logger.error(f"Registration error: {str(e)}")
-            messages.error(request, 'Registration failed. Please try again.')
-    
-    context = {
-        'schools': schools,
-        'user_types': User.USER_TYPES
-    }
-    return render(request, 'core/register.html', context)
-
-
-@login_required
-def profile(request):
-    """
-    User profile view
-    """
-    context = {'user': request.user}
-    return render(request, 'core/profile.html', context)
-
-
-# API Views
+# Advanced API Views
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def dashboard_stats(request):
@@ -694,38 +882,749 @@ def dashboard_stats(request):
     stats = {}
 
     try:
-        if user.user_type == 'student':
-            student = user.studentprofile
+        if user.user_type == 'proprietor':
+            # Get proprietor's schools
+            proprietor_profile = getattr(user, 'proprietor_profile', None)
+            if proprietor_profile:
+                schools = proprietor_profile.schools.all()
+                total_students = StudentProfile.objects.filter(school__in=schools).count()
+                total_teachers = TeacherProfile.objects.filter(school__in=schools).count()
+                total_revenue = FeePayment.objects.filter(
+                    student__school__in=schools,
+                    status='completed'
+                ).aggregate(total=models.Sum('amount_paid'))['total'] or 0
+                
+                stats = {
+                    'total_schools': schools.count(),
+                    'total_students': total_students,
+                    'total_teachers': total_teachers,
+                    'total_revenue': float(total_revenue),
+                    'monthly_revenue': get_monthly_revenue(schools),
+                    'recent_payments': get_recent_payments(schools),
+                    'top_performing_schools': get_top_performing_schools(schools)
+                }
+        elif user.user_type == 'principal':
+            principal_profile = getattr(user, 'principal_profile', None)
+            if principal_profile:
+                school = principal_profile.school
+                stats = {
+                    'total_students': StudentProfile.objects.filter(school=school).count(),
+                    'total_teachers': TeacherProfile.objects.filter(school=school).count(),
+                    'total_classes': Class.objects.filter(school=school).count(),
+                    'attendance_rate': get_school_attendance_rate(school),
+                    'academic_performance': get_school_performance(school),
+                    'fee_collection': get_fee_collection_stats(school)
+                }
+        elif user.user_type == 'student':
+            student = user.student_profile
             stats = {
-                'total_subjects': student.enrollment_set.count(),
+                'total_subjects': student.enrollments.count(),
                 'average_grade': Grade.objects.filter(student=student).aggregate(
                     avg=Avg('score')
                 )['avg'] or 0,
                 'attendance_rate': Attendance.objects.filter(
                     student=student,
                     status='present'
-                ).count() / max(Attendance.objects.filter(student=student).count(), 1) * 100
+                ).count() / max(Attendance.objects.filter(student=student).count(), 1) * 100,
+                'recent_grades': get_recent_grades(student),
+                'upcoming_events': get_upcoming_events(student.school)
             }
         elif user.user_type == 'teacher':
-            teacher = user.teacherprofile
+            teacher = user.teacher_profile
             stats = {
                 'total_classes': teacher.classes.count(),
                 'total_students': StudentProfile.objects.filter(
-                    enrollment__class_enrolled__in=teacher.classes.all()
-                ).distinct().count()
+                    enrollments__class_enrolled__in=teacher.classes.all()
+                ).distinct().count(),
+                'grading_progress': get_grading_progress(teacher),
+                'class_performance': get_class_performance(teacher)
+            }
+        elif user.user_type == 'parent':
+            parent = user.parent_profile
+            children = parent.children.all()
+            stats = {
+                'children_count': children.count(),
+                'overall_attendance': get_children_attendance(children),
+                'academic_summary': get_children_performance(children),
+                'fee_status': get_children_fee_status(children)
             }
     except Exception as e:
+        logger.error(f"Dashboard stats error: {str(e)}")
         stats = {'error': str(e)}
 
     return Response(stats)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def send_message(request):
+    """
+    Send a message to multiple recipients
+    """
+    try:
+        recipient_ids = request.data.get('recipients', [])
+        subject = request.data.get('subject', '')
+        body = request.data.get('body', '')
+        message_type = request.data.get('message_type', 'private')
+        is_urgent = request.data.get('is_urgent', False)
+        
+        if not recipient_ids or not body:
+            return Response({
+                'error': 'Recipients and message body are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Create message
+        message = Message.objects.create(
+            sender=request.user,
+            subject=subject,
+            body=body,
+            message_type=message_type,
+            is_urgent=is_urgent
+        )
+        
+        # Add recipients
+        recipients = User.objects.filter(id__in=recipient_ids)
+        for recipient in recipients:
+            MessageRecipient.objects.create(
+                message=message,
+                recipient=recipient
+            )
+            
+            # Send real-time notification
+            if is_urgent:
+                create_notification(
+                    recipient=recipient,
+                    title=f"Urgent Message from {request.user.get_full_name()}",
+                    message=subject or body[:50] + "...",
+                    notification_type="warning"
+                )
+        
+        return Response({
+            'message': 'Message sent successfully',
+            'message_id': str(message.id)
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        logger.error(f"Send message error: {str(e)}")
+        return Response({
+            'error': 'Failed to send message'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_conversations(request):
+    """
+    Get user's conversations
+    """
+    try:
+        # Get messages where user is sender or recipient
+        sent_messages = Message.objects.filter(sender=request.user)
+        received_messages = Message.objects.filter(
+            recipients=request.user
+        ).distinct()
+        
+        # Combine and get unique conversations
+        all_messages = sent_messages.union(received_messages).order_by('-created_at')
+        
+        conversations = {}
+        for message in all_messages:
+            # Get other participants
+            if message.sender == request.user:
+                participants = message.recipients.exclude(id=request.user.id)
+            else:
+                participants = [message.sender]
+            
+            for participant in participants:
+                conv_key = str(participant.id)
+                if conv_key not in conversations:
+                    conversations[conv_key] = {
+                        'participant': {
+                            'id': str(participant.id),
+                            'name': participant.get_full_name(),
+                            'email': participant.email,
+                            'profile_picture': participant.profile_picture.url if participant.profile_picture else None
+                        },
+                        'last_message': {
+                            'id': str(message.id),
+                            'subject': message.subject,
+                            'body': message.body[:100] + '...' if len(message.body) > 100 else message.body,
+                            'is_urgent': message.is_urgent,
+                            'created_at': message.created_at.isoformat(),
+                            'is_read': MessageRecipient.objects.filter(
+                                message=message,
+                                recipient=request.user,
+                                is_read=True
+                            ).exists() if message.sender != request.user else True
+                        },
+                        'unread_count': MessageRecipient.objects.filter(
+                            message__sender=participant,
+                            recipient=request.user,
+                            is_read=False
+                        ).count()
+                    }
+        
+        return Response(list(conversations.values()), status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Get conversations error: {str(e)}")
+        return Response({
+            'error': 'Failed to load conversations'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_conversation_messages(request, user_id):
+    """
+    Get messages in a conversation with specific user
+    """
+    try:
+        other_user = get_object_or_404(User, id=user_id)
+        
+        # Get messages between users
+        messages = Message.objects.filter(
+            models.Q(sender=request.user, recipients=other_user) |
+            models.Q(sender=other_user, recipients=request.user)
+        ).distinct().order_by('created_at')
+        
+        # Mark messages as read
+        MessageRecipient.objects.filter(
+            message__sender=other_user,
+            recipient=request.user,
+            is_read=False
+        ).update(is_read=True, read_at=timezone.now())
+        
+        # Serialize messages
+        message_data = []
+        for message in messages:
+            message_data.append({
+                'id': str(message.id),
+                'sender': {
+                    'id': str(message.sender.id),
+                    'name': message.sender.get_full_name(),
+                    'email': message.sender.email
+                },
+                'subject': message.subject,
+                'body': message.body,
+                'is_urgent': message.is_urgent,
+                'created_at': message.created_at.isoformat(),
+                'is_own': message.sender == request.user
+            })
+        
+        return Response(message_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Get conversation messages error: {str(e)}")
+        return Response({
+            'error': 'Failed to load messages'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def create_post(request):
+    """
+    Create a new social post
+    """
+    try:
+        title = request.data.get('title', '')
+        content = request.data.get('content', '')
+        post_type = request.data.get('post_type', 'general')
+        visibility = request.data.get('visibility', 'public')
+        tags = request.data.get('tags', [])
+        
+        if not content:
+            return Response({
+                'error': 'Post content is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get user's school if applicable
+        school = None
+        if hasattr(request.user, 'student_profile'):
+            school = request.user.student_profile.school
+        elif hasattr(request.user, 'teacher_profile'):
+            school = request.user.teacher_profile.school
+        elif hasattr(request.user, 'principal_profile'):
+            school = request.user.principal_profile.school
+        
+        post = Post.objects.create(
+            author=request.user,
+            school=school,
+            title=title,
+            content=content,
+            post_type=post_type,
+            visibility=visibility,
+            tags=tags
+        )
+        
+        # Handle file upload
+        if 'image' in request.FILES:
+            post.image = request.FILES['image']
+            post.save()
+        
+        return Response({
+            'message': 'Post created successfully',
+            'post_id': str(post.id)
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        logger.error(f"Create post error: {str(e)}")
+        return Response({
+            'error': 'Failed to create post'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def like_post(request, post_id):
+    """
+    Like or unlike a post
+    """
+    try:
+        post = get_object_or_404(Post, id=post_id)
+        
+        like, created = PostLike.objects.get_or_create(
+            post=post,
+            user=request.user
+        )
+        
+        if not created:
+            like.delete()
+            liked = False
+        else:
+            liked = True
+        
+        # Update likes count
+        post.likes_count = post.likes.count()
+        post.save()
+        
+        return Response({
+            'liked': liked,
+            'likes_count': post.likes_count
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Like post error: {str(e)}")
+        return Response({
+            'error': 'Failed to process like'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def add_comment(request, post_id):
+    """
+    Add a comment to a post
+    """
+    try:
+        post = get_object_or_404(Post, id=post_id)
+        content = request.data.get('content', '')
+        parent_id = request.data.get('parent_id')
+        
+        if not content:
+            return Response({
+                'error': 'Comment content is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        parent = None
+        if parent_id:
+            parent = get_object_or_404(Comment, id=parent_id)
+        
+        comment = Comment.objects.create(
+            post=post,
+            author=request.user,
+            parent=parent,
+            content=content
+        )
+        
+        # Update comments count
+        post.comments_count = post.comments.count()
+        post.save()
+        
+        # Notify post author
+        if post.author != request.user:
+            create_notification(
+                recipient=post.author,
+                title="New Comment",
+                message=f"{request.user.get_full_name()} commented on your post",
+                notification_type="info"
+            )
+        
+        return Response({
+            'message': 'Comment added successfully',
+            'comment_id': str(comment.id)
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        logger.error(f"Add comment error: {str(e)}")
+        return Response({
+            'error': 'Failed to add comment'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def create_school(request):
+    """
+    Create a new school (proprietors only)
+    """
+    if request.user.user_type != 'proprietor':
+        return Response({
+            'error': 'Only proprietors can create schools'
+        }, status=status.HTTP_403_FORBIDDEN)
+    
+    try:
+        school_data = request.data
+        
+        # Validate required fields
+        required_fields = ['name', 'email', 'phone', 'address', 'city', 'state', 'school_type', 'ownership_type']
+        for field in required_fields:
+            if not school_data.get(field):
+                return Response({
+                    'error': f'{field} is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+        school = School.objects.create(
+            name=school_data['name'],
+            email=school_data['email'],
+            phone=school_data['phone'],
+            address=school_data['address'],
+            city=school_data['city'],
+            state=school_data['state'],
+            school_type=school_data['school_type'],
+            ownership_type=school_data['ownership_type'],
+            establishment_date=school_data.get('establishment_date'),
+            motto=school_data.get('motto', ''),
+            vision=school_data.get('vision', ''),
+            mission=school_data.get('mission', ''),
+            website=school_data.get('website', ''),
+            registration_number=school_data.get('registration_number', '')
+        )
+        
+        # Add to proprietor's schools
+        proprietor_profile, created = ProprietorProfile.objects.get_or_create(
+            user=request.user
+        )
+        proprietor_profile.schools.add(school)
+        
+        # Create notification
+        create_notification(
+            recipient=request.user,
+            title="School Created",
+            message=f"School '{school.name}' has been created successfully",
+            notification_type="success"
+        )
+        
+        return Response({
+            'message': 'School created successfully',
+            'school_id': str(school.id),
+            'school': SchoolSerializer(school).data
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        logger.error(f"Create school error: {str(e)}")
+        return Response({
+            'error': 'Failed to create school'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def search_users(request):
+    """
+    Search for users across the platform
+    """
+    try:
+        query = request.GET.get('q', '')
+        user_type = request.GET.get('type', '')
+        school_id = request.GET.get('school')
+        
+        if len(query) < 2:
+            return Response({
+                'error': 'Search query must be at least 2 characters'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        users = User.objects.filter(
+            models.Q(first_name__icontains=query) |
+            models.Q(last_name__icontains=query) |
+            models.Q(email__icontains=query),
+            is_active=True
+        ).exclude(id=request.user.id)
+        
+        if user_type:
+            users = users.filter(user_type=user_type)
+        
+        if school_id:
+            users = users.filter(
+                models.Q(student_profile__school_id=school_id) |
+                models.Q(teacher_profile__school_id=school_id) |
+                models.Q(principal_profile__school_id=school_id)
+            )
+        
+        # Limit results
+        users = users[:20]
+        
+        results = []
+        for user in users:
+            user_data = {
+                'id': str(user.id),
+                'name': user.get_full_name(),
+                'email': user.email,
+                'user_type': user.get_user_type_display(),
+                'profile_picture': user.profile_picture.url if user.profile_picture else None
+            }
+            
+            # Add school info if applicable
+            if hasattr(user, 'student_profile'):
+                user_data['school'] = user.student_profile.school.name
+            elif hasattr(user, 'teacher_profile'):
+                user_data['school'] = user.teacher_profile.school.name
+            elif hasattr(user, 'principal_profile'):
+                user_data['school'] = user.principal_profile.school.name
+            
+            results.append(user_data)
+        
+        return Response(results, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Search users error: {str(e)}")
+        return Response({
+            'error': 'Search failed'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# Helper functions for dashboard stats
+def get_monthly_revenue(schools):
+    """Get monthly revenue data for charts"""
+    from datetime import datetime, timedelta
+    from django.db.models import Sum
+    
+    revenue_data = []
+    for i in range(6):
+        month_start = datetime.now().replace(day=1) - timedelta(days=30*i)
+        month_end = month_start.replace(day=28) + timedelta(days=4)
+        
+        revenue = FeePayment.objects.filter(
+            student__school__in=schools,
+            payment_date__range=[month_start, month_end],
+            status='completed'
+        ).aggregate(total=Sum('amount_paid'))['total'] or 0
+        
+        revenue_data.append({
+            'month': month_start.strftime('%b'),
+            'revenue': float(revenue)
+        })
+    
+    return list(reversed(revenue_data))
+
+
+def get_recent_payments(schools):
+    """Get recent payments"""
+    payments = FeePayment.objects.filter(
+        student__school__in=schools
+    ).select_related('student__user').order_by('-payment_date')[:10]
+    
+    return [{
+        'student': payment.student.user.get_full_name(),
+        'amount': float(payment.amount_paid),
+        'date': payment.payment_date.isoformat(),
+        'status': payment.status
+    } for payment in payments]
+
+
+def get_top_performing_schools(schools):
+    """Get top performing schools based on various metrics"""
+    school_stats = []
+    for school in schools:
+        avg_grade = Grade.objects.filter(
+            student__school=school
+        ).aggregate(avg=Avg('score'))['avg'] or 0
+        
+        attendance_rate = Attendance.objects.filter(
+            student__school=school,
+            status='present'
+        ).count() / max(
+            Attendance.objects.filter(student__school=school).count(), 1
+        ) * 100
+        
+        school_stats.append({
+            'name': school.name,
+            'avg_grade': round(avg_grade, 2),
+            'attendance_rate': round(attendance_rate, 2),
+            'total_students': school.students.count()
+        })
+    
+    return sorted(school_stats, key=lambda x: x['avg_grade'], reverse=True)[:5]
+
+
+def get_school_attendance_rate(school):
+    """Get school attendance rate"""
+    total = Attendance.objects.filter(student__school=school).count()
+    present = Attendance.objects.filter(
+        student__school=school,
+        status='present'
+    ).count()
+    return (present / max(total, 1)) * 100
+
+
+def get_school_performance(school):
+    """Get school academic performance"""
+    avg_grade = Grade.objects.filter(
+        student__school=school
+    ).aggregate(avg=Avg('score'))['avg'] or 0
+    
+    grade_distribution = Grade.objects.filter(
+        student__school=school
+    ).values('letter_grade').annotate(count=Count('id'))
+    
+    return {
+        'average_grade': round(avg_grade, 2),
+        'grade_distribution': list(grade_distribution)
+    }
+
+
+def get_fee_collection_stats(school):
+    """Get fee collection statistics"""
+    total_expected = FeeStructure.objects.filter(
+        school=school
+    ).aggregate(total=Sum('amount'))['total'] or 0
+    
+    total_collected = FeePayment.objects.filter(
+        student__school=school,
+        status='completed'
+    ).aggregate(total=Sum('amount_paid'))['total'] or 0
+    
+    collection_rate = (total_collected / max(total_expected, 1)) * 100
+    
+    return {
+        'total_expected': float(total_expected),
+        'total_collected': float(total_collected),
+        'collection_rate': round(collection_rate, 2)
+    }
+
+
+def get_recent_grades(student):
+    """Get recent grades for student"""
+    grades = Grade.objects.filter(
+        student=student
+    ).select_related('subject').order_by('-date_recorded')[:5]
+    
+    return [{
+        'subject': grade.subject.name,
+        'score': grade.score,
+        'letter_grade': grade.letter_grade,
+        'date': grade.date_recorded.isoformat()
+    } for grade in grades]
+
+
+def get_upcoming_events(school):
+    """Get upcoming events for school"""
+    events = Event.objects.filter(
+        school=school,
+        start_date__gte=timezone.now()
+    ).order_by('start_date')[:5]
+    
+    return [{
+        'title': event.title,
+        'start_date': event.start_date.isoformat(),
+        'event_type': event.event_type
+    } for event in events]
+
+
+def get_grading_progress(teacher):
+    """Get grading progress for teacher"""
+    total_students = StudentProfile.objects.filter(
+        enrollments__class_enrolled__in=teacher.classes.all()
+    ).distinct().count()
+    
+    graded = Grade.objects.filter(teacher=teacher).count()
+    
+    return {
+        'total_students': total_students,
+        'graded': graded,
+        'progress': (graded / max(total_students, 1)) * 100
+    }
+
+
+def get_class_performance(teacher):
+    """Get class performance for teacher"""
+    performance = []
+    for class_obj in teacher.classes.all():
+        avg_grade = Grade.objects.filter(
+            class_taken=class_obj,
+            teacher=teacher
+        ).aggregate(avg=Avg('score'))['avg'] or 0
+        
+        performance.append({
+            'class_name': class_obj.name,
+            'average_grade': round(avg_grade, 2)
+        })
+    
+    return performance
+
+
+def get_children_attendance(children):
+    """Get attendance rate for parent's children"""
+    if not children:
+        return 0
+    
+    total = sum(
+        Attendance.objects.filter(student=child).count()
+        for child in children
+    )
+    present = sum(
+        Attendance.objects.filter(student=child, status='present').count()
+        for child in children
+    )
+    
+    return (present / max(total, 1)) * 100
+
+
+def get_children_performance(children):
+    """Get academic performance for parent's children"""
+    performance = []
+    for child in children:
+        avg_grade = Grade.objects.filter(
+            student=child
+        ).aggregate(avg=Avg('score'))['avg'] or 0
+        
+        performance.append({
+            'name': child.user.get_full_name(),
+            'average_grade': round(avg_grade, 2)
+        })
+    
+    return performance
+
+
+def get_children_fee_status(children):
+    """Get fee payment status for parent's children"""
+    fee_status = []
+    for child in children:
+        total_fees = FeeStructure.objects.filter(
+            school=child.school
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        
+        paid = FeePayment.objects.filter(
+            student=child,
+            status='completed'
+        ).aggregate(total=Sum('amount_paid'))['total'] or 0
+        
+        fee_status.append({
+            'child_name': child.user.get_full_name(),
+            'total_fees': float(total_fees),
+            'paid': float(paid),
+            'balance': float(total_fees - paid)
+        })
+    
+    return fee_status
 
 
 @api_view(['GET'])
 @permission_classes([permissions.AllowAny])
 def public_stats(request):
     """
-    Public API endpoint for general statistics
-    """
+    Public API endpoint for general statistics    """
     stats = {
         'total_schools': School.objects.filter(is_active=True).count(),
         'total_students': User.objects.filter(user_type='student').count(),

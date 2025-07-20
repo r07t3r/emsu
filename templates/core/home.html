@@ -4,231 +4,356 @@
 {% block title %}EMSU - Educational Management System for Universities{% endblock %}
 
 {% block content %}
-<div class="hero-section bg-primary text-white py-5">
-    <div class="container">
-        <div class="row align-items-center">
+<!-- Hero Section -->
+<section class="hero">
+    <div class="container position-relative">
+        <div class="row align-items-center min-vh-100 py-5">
             <div class="col-lg-6">
-                <h1 class="display-4 fw-bold mb-4">Educational Management System for Universities</h1>
-                <p class="lead mb-4">
-                    Streamline your educational institution with our comprehensive management platform. 
-                    Connect students, teachers, parents, and administrators in one unified system.
-                </p>
-                <div class="d-flex gap-3">
-                    <a href="{% url 'register' %}" class="btn btn-light btn-lg">Get Started</a>
-                    <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg">Login</a>
+                <div class="hero-content">
+                    <h1 class="display-3 fw-bold mb-4 animate__animated animate__fadeInUp">
+                        Transform Your
+                        <span class="d-block text-warning">Educational Institution</span>
+                    </h1>
+                    <p class="lead mb-5 opacity-90 animate__animated animate__fadeInUp animate__delay-1s">
+                        Streamline your educational institution with our comprehensive management platform. 
+                        Connect students, teachers, parents, and administrators in one unified ecosystem.
+                    </p>
+                    <div class="d-flex gap-3 flex-wrap animate__animated animate__fadeInUp animate__delay-2s">
+                        <a href="{% url 'register' %}" class="btn btn-light btn-lg px-4 py-3">
+                            <i class="fas fa-rocket me-2"></i>Get Started Free
+                        </a>
+                        <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg px-4 py-3">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </a>
+                    </div>
                 </div>
             </div>
             <div class="col-lg-6">
-                <img src="https://via.placeholder.com/600x400/3498db/ffffff?text=EMSU+Dashboard" 
-                     alt="EMSU Dashboard" class="img-fluid rounded shadow">
+                <div class="hero-image text-center animate__animated animate__fadeInRight animate__delay-1s">
+                    <div class="position-relative">
+                        <div class="bg-white bg-opacity-10 rounded-4 p-4 backdrop-filter-blur">
+                            <i class="fas fa-graduation-cap display-1 text-white opacity-75"></i>
+                            <div class="mt-3">
+                                <div class="bg-success rounded-pill px-3 py-1 d-inline-block mb-2">
+                                    <small class="text-white fw-semibold">
+                                        <i class="fas fa-check me-1"></i>Live Dashboard
+                                    </small>
+                                </div>
+                                <p class="text-white opacity-75 mb-0">Real-time analytics and insights</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<div class="container py-5">
-    <!-- Features Section -->
-    <div class="row mb-5">
-        <div class="col-12 text-center mb-5">
-            <h2 class="h1 mb-3">Powerful Features for Modern Education</h2>
-            <p class="lead text-muted">Everything you need to manage your educational institution effectively</p>
-        </div>
-    </div>
-    
-    <div class="row g-4 mb-5">
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 text-center p-4">
-                <div class="card-body">
-                    <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
-                         style="width: 60px; height: 60px;">
-                        <i class="material-icons text-white">people</i>
-                    </div>
-                    <h5 class="card-title">User Management</h5>
-                    <p class="card-text text-muted">
-                        Comprehensive user management for proprietors, principals, teachers, students, and parents.
-                    </p>
-                </div>
+<!-- Features Section -->
+<section class="py-5 bg-light">
+    <div class="container py-5">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="display-4 fw-bold mb-3">Powerful Features for Modern Education</h2>
+                <p class="lead text-muted mb-5">Everything you need to manage your educational institution effectively</p>
             </div>
         </div>
         
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 text-center p-4">
-                <div class="card-body">
-                    <div class="bg-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
-                         style="width: 60px; height: 60px;">
-                        <i class="material-icons text-white">fact_check</i>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm hover-lift">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-primary bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-4" 
+                             style="width: 80px; height: 80px;">
+                            <i class="fas fa-users text-white fs-2"></i>
+                        </div>
+                        <h5 class="card-title fw-bold mb-3">User Management</h5>
+                        <p class="card-text text-muted">
+                            Comprehensive user management for proprietors, principals, teachers, students, and parents with role-based access control.
+                        </p>
                     </div>
-                    <h5 class="card-title">Attendance Tracking</h5>
-                    <p class="card-text text-muted">
-                        Real-time attendance tracking with automated notifications and detailed reports.
-                    </p>
                 </div>
             </div>
-        </div>
-        
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 text-center p-4">
-                <div class="card-body">
-                    <div class="bg-warning rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
-                         style="width: 60px; height: 60px;">
-                        <i class="material-icons text-white">grade</i>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm hover-lift">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-success bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-4" 
+                             style="width: 80px; height: 80px;">
+                            <i class="fas fa-calendar-check text-white fs-2"></i>
+                        </div>
+                        <h5 class="card-title fw-bold mb-3">Smart Attendance</h5>
+                        <p class="card-text text-muted">
+                            AI-powered attendance tracking with facial recognition, automated notifications, and comprehensive reporting.
+                        </p>
                     </div>
-                    <h5 class="card-title">Grade Management</h5>
-                    <p class="card-text text-muted">
-                        Efficient grade recording, calculation, and reporting with detailed analytics.
-                    </p>
                 </div>
             </div>
-        </div>
-        
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 text-center p-4">
-                <div class="card-body">
-                    <div class="bg-info rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
-                         style="width: 60px; height: 60px;">
-                        <i class="material-icons text-white">message</i>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm hover-lift">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-warning bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-4" 
+                             style="width: 80px; height: 80px;">
+                            <i class="fas fa-chart-line text-white fs-2"></i>
+                        </div>
+                        <h5 class="card-title fw-bold mb-3">Grade Analytics</h5>
+                        <p class="card-text text-muted">
+                            Advanced grade management with predictive analytics, performance insights, and automated report generation.
+                        </p>
                     </div>
-                    <h5 class="card-title">Communication Hub</h5>
-                    <p class="card-text text-muted">
-                        Integrated messaging, announcements, and notifications for seamless communication.
-                    </p>
                 </div>
             </div>
-        </div>
-        
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 text-center p-4">
-                <div class="card-body">
-                    <div class="bg-danger rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
-                         style="width: 60px; height: 60px;">
-                        <i class="material-icons text-white">assessment</i>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm hover-lift">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-info bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-4" 
+                             style="width: 80px; height: 80px;">
+                            <i class="fas fa-comments text-white fs-2"></i>
+                        </div>
+                        <h5 class="card-title fw-bold mb-3">Communication Hub</h5>
+                        <p class="card-text text-muted">
+                            Integrated messaging, video calls, announcements, and notifications for seamless communication across all stakeholders.
+                        </p>
                     </div>
-                    <h5 class="card-title">Analytics & Reports</h5>
-                    <p class="card-text text-muted">
-                        Comprehensive analytics and reporting tools for data-driven decision making.
-                    </p>
                 </div>
             </div>
-        </div>
-        
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 text-center p-4">
-                <div class="card-body">
-                    <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
-                         style="width: 60px; height: 60px;">
-                        <i class="material-icons text-white">group</i>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm hover-lift">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-danger bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-4" 
+                             style="width: 80px; height: 80px;">
+                            <i class="fas fa-brain text-white fs-2"></i>
+                        </div>
+                        <h5 class="card-title fw-bold mb-3">AI Insights</h5>
+                        <p class="card-text text-muted">
+                            Machine learning-powered analytics for student performance prediction, risk assessment, and personalized learning paths.
+                        </p>
                     </div>
-                    <h5 class="card-title">Social Features</h5>
-                    <p class="card-text text-muted">
-                        Social networking features to connect students, teachers, and foster collaboration.
-                    </p>
                 </div>
             </div>
-        </div>
-    </div>
-    
-    <!-- User Types Section -->
-    <div class="row mb-5">
-        <div class="col-12 text-center mb-5">
-            <h2 class="h1 mb-3">Built for Everyone in Education</h2>
-            <p class="lead text-muted">Tailored experiences for different user roles</p>
-        </div>
-    </div>
-    
-    <div class="row g-4">
-        <div class="col-lg-6">
-            <div class="card border-primary">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="material-icons me-2">business</i>
-                        For Proprietors & Principals
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2"><i class="material-icons text-success me-2">check</i>Multi-school management</li>
-                        <li class="mb-2"><i class="material-icons text-success me-2">check</i>Comprehensive dashboards</li>
-                        <li class="mb-2"><i class="material-icons text-success me-2">check</i>Performance analytics</li>
-                        <li class="mb-2"><i class="material-icons text-success me-2">check</i>Staff management</li>
-                        <li class="mb-0"><i class="material-icons text-success me-2">check</i>Financial reporting</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-6">
-            <div class="card border-success">
-                <div class="card-header bg-success text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="material-icons me-2">person</i>
-                        For Teachers
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2"><i class="material-icons text-success me-2">check</i>Class management</li>
-                        <li class="mb-2"><i class="material-icons text-success me-2">check</i>Attendance tracking</li>
-                        <li class="mb-2"><i class="material-icons text-success me-2">check</i>Grade management</li>
-                        <li class="mb-2"><i class="material-icons text-success me-2">check</i>Student communication</li>
-                        <li class="mb-0"><i class="material-icons text-success me-2">check</i>Progress monitoring</li>
-                    </ul>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm hover-lift">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-secondary bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-4" 
+                             style="width: 80px; height: 80px;">
+                            <i class="fas fa-network-wired text-white fs-2"></i>
+                        </div>
+                        <h5 class="card-title fw-bold mb-3">Social Learning</h5>
+                        <p class="card-text text-muted">
+                            Collaborative learning environment with social features, peer interaction, and knowledge sharing capabilities.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div class="row g-4 mt-2">
-        <div class="col-lg-6">
-            <div class="card border-info">
-                <div class="card-header bg-info text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="material-icons me-2">school</i>
-                        For Students
-                    </h5>
+</section>
+
+<!-- User Types Section -->
+<section class="py-5">
+    <div class="container py-5">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="display-4 fw-bold mb-3">Built for Everyone in Education</h2>
+                <p class="lead text-muted mb-5">Tailored experiences for different user roles with specialized dashboards</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-lg h-100">
+                    <div class="card-header bg-primary text-white p-4">
+                        <h5 class="card-title mb-0 d-flex align-items-center">
+                            <i class="fas fa-building me-3 fs-4"></i>
+                            For Proprietors & Principals
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Multi-school management dashboard
+                            </li>
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Advanced analytics and KPI tracking
+                            </li>
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Financial reporting and budgeting
+                            </li>
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Staff performance management
+                            </li>
+                            <li class="mb-0 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Regulatory compliance tracking
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2"><i class="material-icons text-success me-2">check</i>Grade tracking</li>
-                        <li class="mb-2"><i class="material-icons text-success me-2">check</i>Attendance monitoring</li>
-                        <li class="mb-2"><i class="material-icons text-success me-2">check</i>Assignment management</li>
-                        <li class="mb-2"><i class="material-icons text-success me-2">check</i>Social networking</li>
-                        <li class="mb-0"><i class="material-icons text-success me-2">check</i>Performance insights</li>
-                    </ul>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-lg h-100">
+                    <div class="card-header bg-success text-white p-4">
+                        <h5 class="card-title mb-0 d-flex align-items-center">
+                            <i class="fas fa-chalkboard-teacher me-3 fs-4"></i>
+                            For Teachers
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Interactive classroom management
+                            </li>
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Digital gradebook with analytics
+                            </li>
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Assignment creation and tracking
+                            </li>
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Parent-teacher communication portal
+                            </li>
+                            <li class="mb-0 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Curriculum planning tools
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
         
-        <div class="col-lg-6">
-            <div class="card border-warning">
-                <div class="card-header bg-warning text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="material-icons me-2">family_restroom</i>
-                        For Parents
-                    </h5>
+        <div class="row g-4 mt-2">
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-lg h-100">
+                    <div class="card-header bg-info text-white p-4">
+                        <h5 class="card-title mb-0 d-flex align-items-center">
+                            <i class="fas fa-user-graduate me-3 fs-4"></i>
+                            For Students
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Personalized learning dashboard
+                            </li>
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Real-time grade tracking
+                            </li>
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Interactive assignment portal
+                            </li>
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Social learning communities
+                            </li>
+                            <li class="mb-0 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Career guidance and insights
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2"><i class="material-icons text-success me-2">check</i>Child progress monitoring</li>
-                        <li class="mb-2"><i class="material-icons text-success me-2">check</i>Attendance alerts</li>
-                        <li class="mb-2"><i class="material-icons text-success me-2">check</i>Grade notifications</li>
-                        <li class="mb-2"><i class="material-icons text-success me-2">check</i>Teacher communication</li>
-                        <li class="mb-0"><i class="material-icons text-success me-2">check</i>Event updates</li>
-                    </ul>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-lg h-100">
+                    <div class="card-header bg-warning text-white p-4">
+                        <h5 class="card-title mb-0 d-flex align-items-center">
+                            <i class="fas fa-heart me-3 fs-4"></i>
+                            For Parents
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Real-time child progress monitoring
+                            </li>
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Instant attendance notifications
+                            </li>
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Direct teacher communication
+                            </li>
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Fee payment and tracking
+                            </li>
+                            <li class="mb-0 d-flex align-items-center">
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                Event and activity updates
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 
 <!-- CTA Section -->
-<div class="bg-light py-5">
-    <div class="container text-center">
-        <h2 class="h1 mb-3">Ready to Transform Your Institution?</h2>
-        <p class="lead mb-4">Join thousands of educational institutions already using EMSU</p>
-        <div class="d-flex justify-content-center gap-3">
-            <a href="{% url 'register' %}" class="btn btn-primary btn-lg">Start Free Trial</a>
-            <a href="#demo" class="btn btn-outline-primary btn-lg">Request Demo</a>
+<section class="py-5 bg-dark text-white">
+    <div class="container py-5 text-center">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h2 class="display-4 fw-bold mb-4">Ready to Transform Your Institution?</h2>
+                <p class="lead mb-5 opacity-75">
+                    Join thousands of educational institutions worldwide that trust EMSU to streamline their operations and enhance learning outcomes.
+                </p>
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <a href="{% url 'register' %}" class="btn btn-primary btn-lg px-5 py-3">
+                        <i class="fas fa-rocket me-2"></i>Start Free Trial
+                    </a>
+                    <a href="#demo" class="btn btn-outline-light btn-lg px-5 py-3">
+                        <i class="fas fa-play me-2"></i>Watch Demo
+                    </a>
+                </div>
+                <p class="small mt-4 opacity-50">
+                    <i class="fas fa-shield-alt me-2"></i>No credit card required • Setup in 5 minutes
+                </p>
+            </div>
         </div>
     </div>
-</div>
+</section>
+
+<style>
+.hover-lift {
+    transition: all 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.backdrop-filter-blur {
+    backdrop-filter: blur(10px);
+}
+
+.animate__delay-1s {
+    animation-delay: 0.5s;
+}
+
+.animate__delay-2s {
+    animation-delay: 1s;
+}
+</style>
 {% endblock %}

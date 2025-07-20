@@ -1,115 +1,672 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}EMSU - Educational Management System{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .card-hover { transition: all 0.3s ease; }
-        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-        .sidebar-gradient { background: linear-gradient(180deg, #1e293b 0%, #334155 100%); }
-        .text-gradient { background: linear-gradient(45deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    </style>
-</head>
-<body class="bg-gray-50">
-    {% if user.is_authenticated %}
-        <!-- Sidebar -->
-        <div class="fixed inset-y-0 left-0 z-50 w-64 sidebar-gradient transform -translate-x-full md:translate-x-0 transition-transform duration-300" id="sidebar">
-            <div class="flex items-center justify-center h-16 bg-black bg-opacity-20">
-                <h1 class="text-xl font-bold text-white">EMSU Portal</h1>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>
+            {% block title %}EMSU - Educational Management System{% endblock %}
+        </title>
+
+        <!-- Fonts -->
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/icon?family=Material+Icons"
+            rel="stylesheet"
+        />
+
+        <!-- CSS Libraries -->
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        />
+
+        <style>
+            :root {
+                --primary-gradient: linear-gradient(
+                    135deg,
+                    #667eea 0%,
+                    #764ba2 100%
+                );
+                --secondary-gradient: linear-gradient(
+                    135deg,
+                    #f093fb 0%,
+                    #f5576c 100%
+                );
+                --success-gradient: linear-gradient(
+                    135deg,
+                    #4facfe 0%,
+                    #00f2fe 100%
+                );
+                --warning-gradient: linear-gradient(
+                    135deg,
+                    #43e97b 0%,
+                    #38f9d7 100%
+                );
+                --dark-gradient: linear-gradient(
+                    135deg,
+                    #0c0c0c 0%,
+                    #1a1a2e 100%
+                );
+                --light-bg: #f8fafc;
+                --card-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1),
+                    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                --hover-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                --border-radius: 16px;
+                --sidebar-width: 280px;
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: "Inter", sans-serif;
+                background: var(--light-bg);
+                line-height: 1.6;
+                color: #334155;
+            }
+
+            /* Animations */
+            @keyframes slideInLeft {
+                from {
+                    transform: translateX(-100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes fadeInUp {
+                from {
+                    transform: translateY(20px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes pulse {
+                0%,
+                100% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.05);
+                }
+            }
+
+            /* Sidebar Styles */
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                width: var(--sidebar-width);
+                background: var(--dark-gradient);
+                backdrop-filter: blur(20px);
+                border-right: 1px solid rgba(255, 255, 255, 0.1);
+                transform: translateX(-100%);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: 1000;
+                overflow-y: auto;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .sidebar-header {
+                padding: 2rem 1.5rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                text-align: center;
+            }
+
+            .sidebar-logo {
+                font-size: 1.75rem;
+                font-weight: 800;
+                background: linear-gradient(45deg, #667eea, #764ba2);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+
+            .sidebar-nav {
+                padding: 1.5rem 0;
+            }
+
+            .nav-item {
+                margin: 0.5rem 1rem;
+            }
+
+            .nav-link {
+                display: flex;
+                align-items: center;
+                padding: 1rem 1.5rem;
+                color: rgba(255, 255, 255, 0.7);
+                text-decoration: none;
+                border-radius: var(--border-radius);
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .nav-link:hover {
+                color: white;
+                background: rgba(255, 255, 255, 0.1);
+                transform: translateX(5px);
+            }
+
+            .nav-link.active {
+                background: var(--primary-gradient);
+                color: white;
+            }
+
+            .nav-link i {
+                width: 24px;
+                margin-right: 1rem;
+                font-size: 1.2rem;
+            }
+
+            /* Main Content */
+            .main-content {
+                margin-left: 0;
+                transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                min-height: 100vh;
+            }
+
+            .main-content.shifted {
+                margin-left: var(--sidebar-width);
+            }
+
+            /* Header */
+            .header {
+                background: white;
+                backdrop-filter: blur(20px);
+                border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+                padding: 1rem 2rem;
+                position: sticky;
+                top: 0;
+                z-index: 100;
+                box-shadow: var(--card-shadow);
+            }
+
+            .header-content {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .menu-toggle {
+                background: none;
+                border: none;
+                font-size: 1.5rem;
+                color: #64748b;
+                cursor: pointer;
+                padding: 0.5rem;
+                border-radius: 8px;
+                transition: all 0.3s ease;
+            }
+
+            .menu-toggle:hover {
+                background: #f1f5f9;
+                color: #334155;
+            }
+
+            .user-menu {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+            }
+
+            .user-avatar {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background: var(--primary-gradient);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .user-avatar:hover {
+                transform: scale(1.1);
+                box-shadow: var(--hover-shadow);
+            }
+
+            /* Content Area */
+            .content {
+                padding: 2rem;
+                animation: fadeInUp 0.6s ease;
+            }
+
+            /* Cards */
+            .card {
+                background: white;
+                border-radius: var(--border-radius);
+                box-shadow: var(--card-shadow);
+                border: none;
+                transition: all 0.3s ease;
+            }
+
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: var(--hover-shadow);
+            }
+
+            .gradient-card {
+                background: var(--primary-gradient);
+                color: white;
+            }
+
+            /* Buttons */
+            .btn {
+                border-radius: 12px;
+                padding: 0.75rem 1.5rem;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                border: none;
+            }
+
+            .btn-primary {
+                background: var(--primary-gradient);
+            }
+
+            .btn-success {
+                background: var(--success-gradient);
+            }
+
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--hover-shadow);
+            }
+
+            /* Forms */
+            .form-control {
+                border-radius: 12px;
+                border: 2px solid #e2e8f0;
+                padding: 0.75rem 1rem;
+                transition: all 0.3s ease;
+            }
+
+            .form-control:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
+
+            /* Hero Section */
+            .hero {
+                background: var(--primary-gradient);
+                padding: 5rem 0;
+                color: white;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .hero::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>')
+                    repeat;
+                opacity: 0.1;
+            }
+
+            /* Responsive */
+            @media (max-width: 768px) {
+                .sidebar {
+                    width: 100%;
+                }
+
+                .main-content.shifted {
+                    margin-left: 0;
+                }
+
+                .content {
+                    padding: 1rem;
+                }
+            }
+
+            /* Loading Animation */
+            .loading {
+                display: inline-block;
+                width: 20px;
+                height: 20px;
+                border: 3px solid rgba(255, 255, 255, 0.3);
+                border-radius: 50%;
+                border-top-color: white;
+                animation: spin 1s ease-in-out infinite;
+            }
+
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            /* Public Layout */
+            .public-nav {
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(20px);
+                border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+                position: sticky;
+                top: 0;
+                z-index: 100;
+            }
+
+            .navbar-brand {
+                font-weight: 800;
+                font-size: 1.5rem;
+                background: var(--primary-gradient);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+
+            .footer {
+                background: var(--dark-gradient);
+                color: white;
+                padding: 3rem 0 2rem;
+                margin-top: 5rem;
+            }
+        </style>
+
+        {% block extra_css %}{% endblock %}
+    </head>
+    <body>
+        {% block content %} {% if user.is_authenticated %}
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">EMSU</div>
+                <p class="text-light opacity-75 mb-0 small">Education Portal</p>
             </div>
-            <nav class="mt-8">
-                <div class="px-4 space-y-2">
-                    <a href="{% url 'dashboard' %}" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
-                        <i class="fas fa-home mr-3"></i>
+
+            <nav class="sidebar-nav">
+                <div class="nav-item">
+                    <a href="{% url 'dashboard' %}" class="nav-link">
+                        <i class="fas fa-home"></i>
                         Dashboard
                     </a>
-                    {% if user.user_type == 'student' %}
-                        <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
-                            <i class="fas fa-graduation-cap mr-3"></i>
-                            My Grades
-                        </a>
-                        <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
-                            <i class="fas fa-calendar-check mr-3"></i>
-                            Attendance
-                        </a>
-                    {% elif user.user_type == 'teacher' %}
-                        <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
-                            <i class="fas fa-users mr-3"></i>
-                            My Classes
-                        </a>
-                        <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
-                            <i class="fas fa-clipboard-list mr-3"></i>
-                            Grade Book
-                        </a>
-                    {% elif user.user_type == 'parent' %}
-                        <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
-                            <i class="fas fa-child mr-3"></i>
-                            My Children
-                        </a>
-                        <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
-                            <i class="fas fa-credit-card mr-3"></i>
-                            Fee Payments
-                        </a>
-                    {% endif %}
-                    <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
-                        <i class="fas fa-bell mr-3"></i>
+                </div>
+
+                {% if user.user_type == 'student' %}
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-graduation-cap"></i>
+                        My Grades
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-calendar-check"></i>
+                        Attendance
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-book"></i>
+                        Assignments
+                    </a>
+                </div>
+                {% elif user.user_type == 'teacher' %}
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-users"></i>
+                        My Classes
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-clipboard-list"></i>
+                        Grade Book
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-tasks"></i>
+                        Assignments
+                    </a>
+                </div>
+                {% elif user.user_type == 'parent' %}
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-child"></i>
+                        My Children
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-credit-card"></i>
+                        Fee Payments
+                    </a>
+                </div>
+                {% endif %}
+
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-bell"></i>
                         Notifications
                     </a>
-                    <a href="#" class="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors">
-                        <i class="fas fa-cog mr-3"></i>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-user-circle"></i>
+                        Profile
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-cog"></i>
                         Settings
                     </a>
                 </div>
+
+                <div class="nav-item mt-4">
+                    <a href="{% url 'logout' %}" class="nav-link text-danger">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </a>
+                </div>
             </nav>
-            <div class="absolute bottom-0 w-full p-4">
-                <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-gray-300 hover:bg-red-600 hover:text-white rounded-lg transition-colors">
-                    <i class="fas fa-sign-out-alt mr-3"></i>
-                    Logout
-                </a>
-            </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="md:ml-64">
-            <!-- Top Bar -->
-            <header class="bg-white shadow-sm border-b">
-                <div class="flex items-center justify-between px-6 py-4">
-                    <button class="md:hidden" onclick="toggleSidebar()">
-                        <i class="fas fa-bars text-gray-600"></i>
+        <div class="main-content" id="mainContent">
+            <header class="header">
+                <div class="header-content">
+                    <button class="menu-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
                     </button>
-                    <div class="flex items-center space-x-4">
-                        <div class="relative">
-                            <button class="flex items-center space-x-2 bg-gray-100 rounded-full px-4 py-2 hover:bg-gray-200 transition-colors">
-                                <img src="https://via.placeholder.com/32" alt="Profile" class="w-8 h-8 rounded-full">
-                                <span class="text-sm font-medium">{{ user.get_full_name }}</span>
-                                <i class="fas fa-chevron-down text-xs"></i>
-                            </button>
+
+                    <div class="user-menu">
+                        <div
+                            class="user-avatar"
+                            title="{{ user.get_full_name }}"
+                        >
+                            {{ user.first_name.0 }}{{ user.last_name.0 }}
                         </div>
                     </div>
                 </div>
             </header>
 
-            <!-- Page Content -->
-            <main class="p-6">
-                {% block content %}{% endblock %}
+            <main class="content">
+                {% if messages %} {% for message in messages %}
+                <div
+                    class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                    role="alert"
+                >
+                    <i class="fas fa-info-circle me-2"></i>
+                    {{ message }}
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                    ></button>
+                </div>
+                {% endfor %} {% endif %}
             </main>
         </div>
-    {% else %}
-        
-    {% endif %}
+        {% else %}
+        <!-- Public Layout -->
+        <nav class="navbar navbar-expand-lg public-nav">
+            <div class="container">
+                <a class="navbar-brand" href="{% url 'home' %}">
+                    <i class="material-icons me-2">school</i>EMSU
+                </a>
 
-    <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('-translate-x-full');
-        }
-    </script>
-</body>
+                <button
+                    class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav"
+                >
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'home' %}">Home</a>
+                        </li>
+                    </ul>
+
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}"
+                                >Login</a
+                            >
+                        </li>
+                        <li class="nav-item">
+                            <a
+                                class="nav-link btn btn-primary text-white ms-2 px-3"
+                                href="{% url 'register' %}"
+                                >Get Started</a
+                            >
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+            <div
+                class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                role="alert"
+            >
+                <i class="fas fa-info-circle me-2"></i>
+                {{ message }}
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                ></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %} {% endif %}{% endblock %}
+        <main>{% block inner_content %}{% endblock %}</main>
+
+        <footer class="footer">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="mb-3">EMSU</h5>
+                        <p class="mb-0 opacity-75">
+                            Educational Management System for Universities
+                        </p>
+                        <p class="small opacity-50 mt-2">
+                            Empowering education through technology
+                        </p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <p class="mb-0">
+                            &copy; 2025 EMSU. All rights reserved.
+                        </p>
+                        <div class="mt-2">
+                            <a href="#" class="text-light me-3 small"
+                                >Privacy Policy</a
+                            >
+                            <a href="#" class="text-light me-3 small"
+                                >Terms of Service</a
+                            >
+                            <a href="#" class="text-light small">Support</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        <!-- Scripts -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+        <script>
+            function toggleSidebar() {
+                const sidebar = document.getElementById("sidebar");
+                const mainContent = document.getElementById("mainContent");
+
+                sidebar.classList.toggle("active");
+                if (window.innerWidth > 768) {
+                    mainContent.classList.toggle("shifted");
+                }
+            }
+
+            // Auto-close sidebar on mobile when clicking outside
+            document.addEventListener("click", function (e) {
+                const sidebar = document.getElementById("sidebar");
+                const toggle = document.querySelector(".menu-toggle");
+
+                if (
+                    window.innerWidth <= 768 &&
+                    !sidebar.contains(e.target) &&
+                    !toggle.contains(e.target) &&
+                    sidebar.classList.contains("active")
+                ) {
+                    sidebar.classList.remove("active");
+                }
+            });
+
+            // Handle responsive behavior
+            window.addEventListener("resize", function () {
+                const sidebar = document.getElementById("sidebar");
+                const mainContent = document.getElementById("mainContent");
+
+                if (window.innerWidth > 768) {
+                    sidebar.classList.add("active");
+                    mainContent.classList.add("shifted");
+                } else {
+                    sidebar.classList.remove("active");
+                    mainContent.classList.remove("shifted");
+                }
+            });
+
+            // Initialize sidebar state
+            if (window.innerWidth > 768) {
+                document.getElementById("sidebar").classList.add("active");
+                document.getElementById("mainContent").classList.add("shifted");
+            }
+        </script>
+
+        {% block extra_js %}{% endblock %}
+    </body>
 </html>

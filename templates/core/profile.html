@@ -1,0 +1,313 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Profile - EMSU{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 fw-bold mb-0">My Profile</h1>
+                    <p class="text-muted mb-0">Manage your personal information and account settings</p>
+                </div>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                    <i class="fas fa-edit me-2"></i>Edit Profile
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <!-- Profile Overview -->
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-body text-center p-5">
+                    <div class="position-relative d-inline-block mb-4">
+                        <div class="user-avatar-large bg-primary bg-gradient rounded-circle d-flex align-items-center justify-content-center text-white fw-bold">
+                            {{ user.first_name.0 }}{{ user.last_name.0 }}
+                        </div>
+                        <button class="btn btn-sm btn-light rounded-circle position-absolute bottom-0 end-0 shadow-sm">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                    </div>
+                    
+                    <h4 class="fw-bold mb-1">{{ user.get_full_name }}</h4>
+                    <p class="text-muted mb-3">{{ user.get_user_type_display }}</p>
+                    
+                    <div class="d-flex justify-content-center gap-2 mb-4">
+                        {% if user.is_active %}
+                            <span class="badge bg-success-subtle text-success px-3 py-2">
+                                <i class="fas fa-check-circle me-1"></i>Active
+                            </span>
+                        {% endif %}
+                        {% if user.email_verified %}
+                            <span class="badge bg-info-subtle text-info px-3 py-2">
+                                <i class="fas fa-shield-alt me-1"></i>Verified
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="fw-bold h5 mb-0">{{ user.date_joined|date:"M Y" }}</div>
+                            <small class="text-muted">Joined</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="fw-bold h5 mb-0">{{ user.last_login|timesince }}</div>
+                            <small class="text-muted">Last Login</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="fw-bold h5 mb-0">98%</div>
+                            <small class="text-muted">Complete</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Profile Details -->
+        <div class="col-lg-8">
+            <div class="row g-4">
+                <!-- Personal Information -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-transparent">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-user me-2 text-primary"></i>Personal Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-semibold">FIRST NAME</label>
+                                    <p class="fw-semibold mb-0">{{ user.first_name }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-semibold">LAST NAME</label>
+                                    <p class="fw-semibold mb-0">{{ user.last_name }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-semibold">EMAIL ADDRESS</label>
+                                    <p class="fw-semibold mb-0">
+                                        {{ user.email }}
+                                        {% if user.email_verified %}
+                                            <i class="fas fa-check-circle text-success ms-2"></i>
+                                        {% else %}
+                                            <i class="fas fa-exclamation-triangle text-warning ms-2"></i>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted small fw-semibold">ACCOUNT TYPE</label>
+                                    <p class="fw-semibold mb-0">{{ user.get_user_type_display }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Account Settings -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-transparent">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-cog me-2 text-primary"></i>Account Settings
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="fw-semibold">Email Notifications</div>
+                                            <small class="text-muted">Receive updates via email</small>
+                                        </div>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" checked>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="fw-semibold">SMS Notifications</div>
+                                            <small class="text-muted">Receive SMS alerts</small>
+                                        </div>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="fw-semibold">Two-Factor Authentication</div>
+                                            <small class="text-muted">Extra security for your account</small>
+                                        </div>
+                                        <button class="btn btn-outline-primary btn-sm">Enable</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="fw-semibold">Password</div>
+                                            <small class="text-muted">Last changed 3 months ago</small>
+                                        </div>
+                                        <button class="btn btn-outline-secondary btn-sm">Change</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Activity Log -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-transparent">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-history me-2 text-primary"></i>Recent Activity
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="activity-timeline">
+                                <div class="activity-item">
+                                    <div class="activity-icon bg-success">
+                                        <i class="fas fa-sign-in-alt"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="fw-semibold">Logged in</div>
+                                        <small class="text-muted">{{ user.last_login|timesince }} ago</small>
+                                    </div>
+                                </div>
+                                <div class="activity-item">
+                                    <div class="activity-icon bg-info">
+                                        <i class="fas fa-edit"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="fw-semibold">Profile updated</div>
+                                        <small class="text-muted">2 days ago</small>
+                                    </div>
+                                </div>
+                                <div class="activity-item">
+                                    <div class="activity-icon bg-warning">
+                                        <i class="fas fa-shield-alt"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="fw-semibold">Password changed</div>
+                                        <small class="text-muted">1 week ago</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Edit Profile
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProfileForm">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="editFirstName" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="editFirstName" value="{{ user.first_name }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editLastName" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="editLastName" value="{{ user.last_name }}">
+                        </div>
+                        <div class="col-12">
+                            <label for="editEmail" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="editEmail" value="{{ user.email }}">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.user-avatar-large {
+    width: 120px;
+    height: 120px;
+    font-size: 2.5rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.activity-timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.activity-timeline::before {
+    content: '';
+    position: absolute;
+    left: 1rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.activity-item {
+    position: relative;
+    padding-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.activity-item:last-child {
+    padding-bottom: 0;
+}
+
+.activity-icon {
+    position: absolute;
+    left: -2rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75rem;
+    z-index: 1;
+}
+
+.activity-content {
+    margin-left: 1rem;
+}
+
+.badge {
+    border-radius: 8px;
+}
+
+.form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+</style>
+{% endblock %}

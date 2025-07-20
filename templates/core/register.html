@@ -4,139 +4,220 @@
 {% block title %}Register - EMSU{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card shadow-lg border-0">
-                <div class="card-header bg-success text-white text-center py-4">
-                    <h3 class="mb-0">
-                        <i class="material-icons me-2">person_add</i>
-                        Create Account
-                    </h3>
-                    <p class="mb-0 opacity-75">Join the EMSU community</p>
-                </div>
-                <div class="card-body p-5">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
+<div class="min-vh-100 py-5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-10 col-lg-8 col-xl-6">
+                <div class="card border-0 shadow-lg animate__animated animate__fadeInUp">
+                    <div class="card-header text-white text-center py-4" style="background: var(--success-gradient);">
+                        <div class="mb-2">
+                            <i class="fas fa-user-plus fa-3x"></i>
+                        </div>
+                        <h3 class="mb-0 fw-bold">Join EMSU</h3>
+                        <p class="mb-0 opacity-75">Create your account and get started</p>
+                    </div>
                     
-                    <form method="post">
-                        {% csrf_token %}
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="first_name" class="form-label">First Name *</label>
-                                <input type="text" class="form-control" id="first_name" name="first_name" 
-                                       placeholder="First Name" required value="{{ request.POST.first_name }}">
+                    <div class="card-body p-4 p-md-5">
+                        <form method="post" id="registerForm" novalidate>
+                            {% csrf_token %}
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <label for="first_name" class="form-label fw-semibold">
+                                        <i class="fas fa-user me-2 text-muted"></i>First Name <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="first_name" 
+                                           name="first_name" 
+                                           placeholder="Enter your first name"
+                                           required 
+                                           minlength="2"
+                                           value="{{ form_data.first_name|default:'' }}">
+                                    <div class="invalid-feedback"></div>
+                                    <div class="valid-feedback">Looks good!</div>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <label for="last_name" class="form-label fw-semibold">
+                                        <i class="fas fa-user me-2 text-muted"></i>Last Name <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="last_name" 
+                                           name="last_name" 
+                                           placeholder="Enter your last name"
+                                           required 
+                                           minlength="2"
+                                           value="{{ form_data.last_name|default:'' }}">
+                                    <div class="invalid-feedback"></div>
+                                    <div class="valid-feedback">Looks good!</div>
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="last_name" class="form-label">Last Name *</label>
-                                <input type="text" class="form-control" id="last_name" name="last_name" 
-                                       placeholder="Last Name" required value="{{ request.POST.last_name }}">
+                            
+                            <div class="mb-4">
+                                <label for="email" class="form-label fw-semibold">
+                                    <i class="fas fa-envelope me-2 text-muted"></i>Email Address <span class="text-danger">*</span>
+                                </label>
+                                <input type="email" 
+                                       class="form-control" 
+                                       id="email" 
+                                       name="email" 
+                                       placeholder="Enter your email address"
+                                       required 
+                                       value="{{ form_data.email|default:'' }}">
+                                <div class="invalid-feedback"></div>
+                                <div class="valid-feedback">Email is available!</div>
+                                <div class="form-text">We'll never share your email with anyone else.</div>
                             </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email Address *</label>
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="material-icons">email</i>
-                                </span>
-                                <input type="email" class="form-control" id="email" name="email" 
-                                       placeholder="Enter your email" required value="{{ request.POST.email }}">
+                            
+                            <div class="mb-4">
+                                <label for="password" class="form-label fw-semibold">
+                                    <i class="fas fa-lock me-2 text-muted"></i>Password <span class="text-danger">*</span>
+                                </label>
+                                <div class="position-relative">
+                                    <input type="password" 
+                                           class="form-control" 
+                                           id="password" 
+                                           name="password" 
+                                           placeholder="Create a strong password"
+                                           required 
+                                           minlength="8">
+                                    <button type="button" 
+                                            class="btn btn-link position-absolute end-0 top-0 h-100 px-3 text-muted"
+                                            onclick="togglePassword('password', 'toggleIcon1')">
+                                        <i class="fas fa-eye" id="toggleIcon1"></i>
+                                    </button>
+                                </div>
+                                <div class="password-strength mt-2">
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar" id="strengthBar" style="width: 0%"></div>
+                                    </div>
+                                    <small class="text-muted" id="strengthText">Password must be at least 8 characters</small>
+                                </div>
+                                <div class="invalid-feedback"></div>
                             </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password *</label>
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="material-icons">lock</i>
-                                </span>
-                                <input type="password" class="form-control" id="password" name="password" 
-                                       placeholder="Enter your password" required minlength="6">
-                            </div>
-                            <small class="text-muted">Password must be at least 6 characters long</small>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="user_type" class="form-label">Account Type *</label>
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="material-icons">badge</i>
-                                </span>
+                            
+                            <div class="mb-4">
+                                <label for="user_type" class="form-label fw-semibold">
+                                    <i class="fas fa-id-badge me-2 text-muted"></i>Account Type <span class="text-danger">*</span>
+                                </label>
                                 <select class="form-select" id="user_type" name="user_type" required onchange="toggleSchoolField()">
                                     <option value="">Select your role</option>
                                     {% for type_value, type_label in user_types %}
                                         <option value="{{ type_value }}" 
-                                                {% if request.POST.user_type == type_value %}selected{% endif %}>
+                                                {% if form_data.user_type == type_value %}selected{% endif %}>
                                             {{ type_label }}
                                         </option>
                                     {% endfor %}
                                 </select>
+                                <div class="invalid-feedback">Please select your account type</div>
                             </div>
-                        </div>
-                        
-                        <div class="mb-4" id="school_field" style="display: none;">
-                            <label for="school" class="form-label">Select School</label>
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="material-icons">school</i>
-                                </span>
+                            
+                            <div class="mb-4" id="school_field" style="display: none;">
+                                <label for="school" class="form-label fw-semibold">
+                                    <i class="fas fa-school me-2 text-muted"></i>Select School <span class="text-danger">*</span>
+                                </label>
                                 <select class="form-select" id="school" name="school">
                                     <option value="">Choose your school</option>
                                     {% for school in schools %}
                                         <option value="{{ school.id }}" 
-                                                {% if request.POST.school == school.id|stringformat:"s" %}selected{% endif %}>
+                                                {% if form_data.school == school.id|stringformat:"s" %}selected{% endif %}>
                                             {{ school.name }} - {{ school.city }}, {{ school.state }}
                                         </option>
                                     {% endfor %}
                                 </select>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Don't see your school? <a href="#" class="text-decoration-none">Contact us</a> to add it.
+                                </div>
+                                <div class="invalid-feedback">Please select your school</div>
                             </div>
-                            <small class="text-muted">Don't see your school? Contact us to add it.</small>
-                        </div>
-                        
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="terms" required>
-                            <label class="form-check-label" for="terms">
-                                I agree to the <a href="#" class="text-decoration-none">Terms of Service</a> 
-                                and <a href="#" class="text-decoration-none">Privacy Policy</a> *
-                            </label>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-success w-100 py-2 mb-3">
-                            <i class="material-icons me-2">person_add</i>
-                            Create Account
-                        </button>
-                        
-                        <div class="text-center">
-                            <small class="text-muted">
-                                * Required fields
-                            </small>
-                        </div>
-                    </form>
+                            
+                            <div class="mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="terms" required>
+                                    <label class="form-check-label" for="terms">
+                                        I agree to the <a href="#" class="text-decoration-none" target="_blank">Terms of Service</a> 
+                                        and <a href="#" class="text-decoration-none" target="_blank">Privacy Policy</a> <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="invalid-feedback">You must agree to the terms and conditions</div>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success btn-lg w-100 mb-4" id="registerBtn">
+                                <span class="btn-text">
+                                    <i class="fas fa-user-plus me-2"></i>Create Account
+                                </span>
+                                <span class="btn-loading d-none">
+                                    <span class="loading me-2"></span>Creating account...
+                                </span>
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="card-footer text-center py-4 bg-light">
+                        <p class="mb-0 text-muted">
+                            Already have an account? 
+                            <a href="{% url 'login' %}" class="text-decoration-none fw-semibold">Sign in here</a>
+                        </p>
+                    </div>
                 </div>
-                <div class="card-footer text-center py-3">
-                    <span class="text-muted">Already have an account? </span>
-                    <a href="{% url 'login' %}" class="text-decoration-none">Sign in here</a>
+                
+                <!-- Features Preview -->
+                <div class="row g-3 mt-4">
+                    <div class="col-4">
+                        <div class="text-center animate__animated animate__fadeInUp animate__delay-1s">
+                            <div class="bg-white bg-opacity-20 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+                                <i class="fas fa-shield-alt text-white fa-2x"></i>
+                            </div>
+                            <p class="small mb-0 fw-semibold text-white">Secure & Safe</p>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center animate__animated animate__fadeInUp animate__delay-2s">
+                            <div class="bg-white bg-opacity-20 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+                                <i class="fas fa-rocket text-white fa-2x"></i>
+                            </div>
+                            <p class="small mb-0 fw-semibold text-white">Quick Setup</p>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center animate__animated animate__fadeInUp animate__delay-3s">
+                            <div class="bg-white bg-opacity-20 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+                                <i class="fas fa-heart text-white fa-2x"></i>
+                            </div>
+                            <p class="small mb-0 fw-semibold text-white">Always Free</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
+// Toggle password visibility
+function togglePassword(inputId, iconId) {
+    const passwordInput = document.getElementById(inputId);
+    const toggleIcon = document.getElementById(iconId);
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.className = 'fas fa-eye-slash';
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.className = 'fas fa-eye';
+    }
+}
+
+// Toggle school field based on user type
 function toggleSchoolField() {
     const userType = document.getElementById('user_type').value;
     const schoolField = document.getElementById('school_field');
     const schoolSelect = document.getElementById('school');
     
-    // Show school field for student, teacher, and principal
     if (['student', 'teacher', 'principal'].includes(userType)) {
         schoolField.style.display = 'block';
         schoolSelect.required = true;
@@ -145,11 +226,200 @@ function toggleSchoolField() {
         schoolSelect.required = false;
         schoolSelect.value = '';
     }
+    
+    validateField(document.getElementById('user_type'));
 }
+
+// Password strength checker
+document.getElementById('password').addEventListener('input', function() {
+    const password = this.value;
+    const strengthBar = document.getElementById('strengthBar');
+    const strengthText = document.getElementById('strengthText');
+    
+    let strength = 0;
+    let feedback = [];
+    
+    // Length check
+    if (password.length >= 8) strength += 25;
+    else feedback.push('at least 8 characters');
+    
+    // Lowercase check
+    if (/[a-z]/.test(password)) strength += 25;
+    else feedback.push('lowercase letter');
+    
+    // Uppercase check
+    if (/[A-Z]/.test(password)) strength += 25;
+    else feedback.push('uppercase letter');
+    
+    // Number check
+    if (/[0-9]/.test(password)) strength += 25;
+    else feedback.push('number');
+    
+    // Update progress bar
+    strengthBar.style.width = strength + '%';
+    
+    // Update styling and text
+    strengthBar.className = 'progress-bar';
+    if (strength === 0) {
+        strengthText.textContent = 'Password must be at least 8 characters';
+    } else if (strength <= 25) {
+        strengthBar.classList.add('bg-danger');
+        strengthText.textContent = 'Weak - Add ' + feedback.join(', ');
+    } else if (strength <= 50) {
+        strengthBar.classList.add('bg-warning');
+        strengthText.textContent = 'Fair - Add ' + feedback.join(', ');
+    } else if (strength <= 75) {
+        strengthBar.classList.add('bg-info');
+        strengthText.textContent = 'Good - Add ' + feedback.join(', ');
+    } else {
+        strengthBar.classList.add('bg-success');
+        strengthText.textContent = 'Strong password!';
+    }
+    
+    validateField(this);
+});
+
+// Email availability checker with debounce
+let emailTimeout;
+document.getElementById('email').addEventListener('input', function() {
+    const email = this.value.trim();
+    const field = this;
+    
+    clearTimeout(emailTimeout);
+    
+    if (email && email.includes('@') && email.includes('.')) {
+        emailTimeout = setTimeout(function() {
+            checkEmailAvailability(email, field);
+        }, 500);
+    }
+    
+    validateField(field);
+});
+
+// Check email availability
+async function checkEmailAvailability(email, field) {
+    try {
+        const response = await fetch('/api/check-email/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ email: email })
+        });
+        
+        const data = await response.json();
+        
+        if (data.available) {
+            field.classList.remove('is-invalid');
+            field.classList.add('is-valid');
+        } else {
+            field.classList.remove('is-valid');
+            field.classList.add('is-invalid');
+            field.nextElementSibling.textContent = data.message;
+        }
+    } catch (error) {
+        console.error('Error checking email:', error);
+    }
+}
+
+// Real-time validation for all fields
+function validateField(field) {
+    const value = field.value.trim();
+    let isValid = true;
+    let message = '';
+    
+    // Remove existing validation classes
+    field.classList.remove('is-valid', 'is-invalid');
+    
+    if (field.hasAttribute('required') && !value) {
+        isValid = false;
+        message = 'This field is required';
+    } else if (field.type === 'email' && value) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) {
+            isValid = false;
+            message = 'Please enter a valid email address';
+        }
+    } else if (field.hasAttribute('minlength') && value.length < field.getAttribute('minlength')) {
+        isValid = false;
+        message = `Minimum ${field.getAttribute('minlength')} characters required`;
+    }
+    
+    // Apply validation styling
+    if (value) {
+        field.classList.add(isValid ? 'is-valid' : 'is-invalid');
+        if (!isValid) {
+            const feedback = field.nextElementSibling;
+            if (feedback && feedback.classList.contains('invalid-feedback')) {
+                feedback.textContent = message;
+            }
+        }
+    }
+    
+    return isValid;
+}
+
+// Add validation to all form fields
+document.querySelectorAll('input, select').forEach(field => {
+    field.addEventListener('blur', () => validateField(field));
+    field.addEventListener('input', () => {
+        if (field.classList.contains('is-invalid')) {
+            validateField(field);
+        }
+    });
+});
+
+// Form submission
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const btn = document.getElementById('registerBtn');
+    const btnText = btn.querySelector('.btn-text');
+    const btnLoading = btn.querySelector('.btn-loading');
+    const form = this;
+    
+    // Validate all fields
+    let isFormValid = true;
+    const fields = form.querySelectorAll('input[required], select[required]');
+    
+    fields.forEach(field => {
+        if (!validateField(field)) {
+            isFormValid = false;
+        }
+    });
+    
+    // Check terms checkbox
+    const termsCheckbox = document.getElementById('terms');
+    if (!termsCheckbox.checked) {
+        isFormValid = false;
+        termsCheckbox.classList.add('is-invalid');
+    } else {
+        termsCheckbox.classList.remove('is-invalid');
+    }
+    
+    if (isFormValid) {
+        // Show loading state
+        btnText.classList.add('d-none');
+        btnLoading.classList.remove('d-none');
+        btn.disabled = true;
+        
+        // Submit form
+        form.submit();
+    } else {
+        // Scroll to first invalid field
+        const firstInvalid = form.querySelector('.is-invalid');
+        if (firstInvalid) {
+            firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstInvalid.focus();
+        }
+    }
+});
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     toggleSchoolField();
+    document.getElementById('first_name').focus();
 });
 </script>
 {% endblock %}
