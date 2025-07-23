@@ -812,35 +812,35 @@ class TeacherGroupSerializer(serializers.ModelSerializer):
         return TeacherProfileSerializer(obj.members.all()[:10], many=True).data
 
 
-# Financial Serializers
-class FeeStructureSerializer(serializers.ModelSerializer):
-    school_name = serializers.CharField(source='school.name', read_only=True)
-    session_name = serializers.CharField(source='session.name', read_only=True)
-    class_name = serializers.CharField(source='class_level.name', read_only=True)
+# # Financial Serializers
+# class FeeStructureSerializer(serializers.ModelSerializer):
+#     school_name = serializers.CharField(source='school.name', read_only=True)
+#     session_name = serializers.CharField(source='session.name', read_only=True)
+#     class_name = serializers.CharField(source='class_level.name', read_only=True)
 
-    class Meta:
-        model = FeeStructure
-        fields = [
-            'id', 'school', 'school_name', 'session', 'session_name',
-            'class_level', 'class_name', 'fee_type', 'amount',
-            'is_mandatory', 'due_date', 'description', 'created_at'
-        ]
-        read_only_fields = ['id', 'created_at']
+#     class Meta:
+#         model = FeeStructure
+#         fields = [
+#             'id', 'school', 'school_name', 'session', 'session_name',
+#             'class_level', 'class_name', 'fee_type', 'amount',
+#             'is_mandatory', 'due_date', 'description', 'created_at'
+#         ]
+#         read_only_fields = ['id', 'created_at']
 
 
-class FeePaymentSerializer(serializers.ModelSerializer):
-    student_name = serializers.CharField(source='student.user.get_full_name', read_only=True)
-    fee_type = serializers.CharField(source='fee_structure.get_fee_type_display', read_only=True)
-    recorded_by_name = serializers.CharField(source='recorded_by.get_full_name', read_only=True)
+# class FeePaymentSerializer(serializers.ModelSerializer):
+#     student_name = serializers.CharField(source='student.user.get_full_name', read_only=True)
+#     fee_type = serializers.CharField(source='fee_structure.get_fee_type_display', read_only=True)
+#     recorded_by_name = serializers.CharField(source='recorded_by.get_full_name', read_only=True)
 
-    class Meta:
-        model = FeePayment
-        fields = [
-            'id', 'student', 'student_name', 'fee_structure', 'fee_type',
-            'amount_paid', 'payment_date', 'payment_method', 'reference_number',
-            'status', 'receipt_number', 'notes', 'recorded_by', 'recorded_by_name'
-        ]
-        read_only_fields = ['id', 'payment_date']
+#     class Meta:
+#         model = FeePayment
+#         fields = [
+#             'id', 'student', 'student_name', 'fee_structure', 'fee_type',
+#             'amount_paid', 'payment_date', 'payment_method', 'reference_number',
+#             'status', 'receipt_number', 'notes', 'recorded_by', 'recorded_by_name'
+#         ]
+#         read_only_fields = ['id', 'payment_date']
 
 
 # Schedule Serializers

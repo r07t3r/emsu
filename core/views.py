@@ -889,19 +889,10 @@ def dashboard_stats(request):
                 schools = proprietor_profile.schools.all()
                 total_students = StudentProfile.objects.filter(school__in=schools).count()
                 total_teachers = TeacherProfile.objects.filter(school__in=schools).count()
-                total_revenue = FeePayment.objects.filter(
-                    student__school__in=schools,
-                    status='completed'
-                ).aggregate(total=models.Sum('amount_paid'))['total'] or 0
-                
                 stats = {
                     'total_schools': schools.count(),
                     'total_students': total_students,
                     'total_teachers': total_teachers,
-                    'total_revenue': float(total_revenue),
-                    'monthly_revenue': get_monthly_revenue(schools),
-                    'recent_payments': get_recent_payments(schools),
-                    'top_performing_schools': get_top_performing_schools(schools)
                 }
         elif user.user_type == 'principal':
             principal_profile = getattr(user, 'principal_profile', None)
@@ -913,7 +904,6 @@ def dashboard_stats(request):
                     'total_classes': Class.objects.filter(school=school).count(),
                     'attendance_rate': get_school_attendance_rate(school),
                     'academic_performance': get_school_performance(school),
-                    'fee_collection': get_fee_collection_stats(school)
                 }
         elif user.user_type == 'student':
             student = user.student_profile
@@ -946,7 +936,6 @@ def dashboard_stats(request):
                 'children_count': children.count(),
                 'overall_attendance': get_children_attendance(children),
                 'academic_summary': get_children_performance(children),
-                'fee_status': get_children_fee_status(children)
             }
     except Exception as e:
         logger.error(f"Dashboard stats error: {str(e)}")
@@ -1395,42 +1384,6 @@ def search_users(request):
 
 
 # Helper functions for dashboard stats
-def get_monthly_revenue(schools):
-    """Get monthly revenue data for charts"""
-    from datetime import datetime, timedelta
-    from django.db.models import Sum
-    
-    revenue_data = []
-    for i in range(6):
-        month_start = datetime.now().replace(day=1) - timedelta(days=30*i)
-        month_end = month_start.replace(day=28) + timedelta(days=4)
-        
-        revenue = FeePayment.objects.filter(
-            student__school__in=schools,
-            payment_date__range=[month_start, month_end],
-            status='completed'
-        ).aggregate(total=Sum('amount_paid'))['total'] or 0
-        
-        revenue_data.append({
-            'month': month_start.strftime('%b'),
-            'revenue': float(revenue)
-        })
-    
-    return list(reversed(revenue_data))
-
-
-def get_recent_payments(schools):
-    """Get recent payments"""
-    payments = FeePayment.objects.filter(
-        student__school__in=schools
-    ).select_related('student__user').order_by('-payment_date')[:10]
-    
-    return [{
-        'student': payment.student.user.get_full_name(),
-        'amount': float(payment.amount_paid),
-        'date': payment.payment_date.isoformat(),
-        'status': payment.status
-    } for payment in payments]
 
 
 def get_top_performing_schools(schools):
@@ -1484,24 +1437,6 @@ def get_school_performance(school):
     }
 
 
-def get_fee_collection_stats(school):
-    """Get fee collection statistics"""
-    total_expected = FeeStructure.objects.filter(
-        school=school
-    ).aggregate(total=Sum('amount'))['total'] or 0
-    
-    total_collected = FeePayment.objects.filter(
-        student__school=school,
-        status='completed'
-    ).aggregate(total=Sum('amount_paid'))['total'] or 0
-    
-    collection_rate = (total_collected / max(total_expected, 1)) * 100
-    
-    return {
-        'total_expected': float(total_expected),
-        'total_collected': float(total_collected),
-        'collection_rate': round(collection_rate, 2)
-    }
 
 
 def get_recent_grades(student):
@@ -1597,27 +1532,6 @@ def get_children_performance(children):
     return performance
 
 
-def get_children_fee_status(children):
-    """Get fee payment status for parent's children"""
-    fee_status = []
-    for child in children:
-        total_fees = FeeStructure.objects.filter(
-            school=child.school
-        ).aggregate(total=Sum('amount'))['total'] or 0
-        
-        paid = FeePayment.objects.filter(
-            student=child,
-            status='completed'
-        ).aggregate(total=Sum('amount_paid'))['total'] or 0
-        
-        fee_status.append({
-            'child_name': child.user.get_full_name(),
-            'total_fees': float(total_fees),
-            'paid': float(paid),
-            'balance': float(total_fees - paid)
-        })
-    
-    return fee_status
 
 
 @api_view(['GET'])
@@ -1632,3 +1546,27 @@ def public_stats(request):
         'total_users': User.objects.filter(is_active=True).count()
     }
     return Response(stats)
+
+
+@login_required
+def reports_view(request):
+    """
+    Placeholder view for reports
+    """
+    return render(request, 'core/reports.html')
+
+
+@login_required
+def generate_report_view(request):
+    """
+    Placeholder view for generating reports
+    """
+    return render(request, 'core/generate_report.html')
+
+
+@login_required
+def finances_view(request):
+    """
+    Placeholder view for finances
+    """
+    return render(request, 'core/finances.html')

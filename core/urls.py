@@ -55,4 +55,9 @@ urlpatterns = [
     # School management endpoints
     path('api/schools/create/', views.create_school, name='create_school'),
     path('api/users/search/', views.search_users, name='search_users'),
+
+    # New URLs
+    path('reports/generate/', views.generate_report_view, name='generate_report'),
+    path('reports/', views.reports_view, name='reports'),
+    path('finances/', views.finances_view, name='finances'),
 ]

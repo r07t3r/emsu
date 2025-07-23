@@ -136,8 +136,8 @@ class School(models.Model):
     total_teachers = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     is_verified = models.BooleanField(default=False)
-    subscription_plan = models.CharField(max_length=50, default='basic')
-    subscription_expires = models.DateTimeField(blank=True, null=True)
+    # subscription_plan = models.CharField(max_length=50, default='basic')
+    # subscription_expires = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -878,76 +878,76 @@ class TeacherGroup(models.Model):
         return self.name
 
 
-# Fee and Financial Models
-class FeeStructure(models.Model):
-    FEE_TYPES = (
-        ('tuition', 'Tuition Fee'),
-        ('development', 'Development Fee'),
-        ('exam', 'Examination Fee'),
-        ('sport', 'Sports Fee'),
-        ('transport', 'Transport Fee'),
-        ('uniform', 'Uniform Fee'),
-        ('book', 'Book Fee'),
-        ('meal', 'Meal Fee'),
-        ('other', 'Other Fee'),
-    )
-    
-    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='fee_structures')
-    session = models.ForeignKey(AcademicSession, on_delete=models.CASCADE, related_name='fee_structures')
-    class_level = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='fee_structures')
-    fee_type = models.CharField(max_length=20, choices=FEE_TYPES)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    is_mandatory = models.BooleanField(default=True)
-    due_date = models.DateField(blank=True, null=True)
-    description = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        db_table = 'fee_structures'
-        unique_together = ['school', 'session', 'class_level', 'fee_type']
-    
-    def __str__(self):
-        return f"{self.school.name} - {self.class_level.name} - {self.get_fee_type_display()}: ₦{self.amount}"
+# # Fee and Financial Models
+# class FeeStructure(models.Model):
+#     FEE_TYPES = (
+#         ('tuition', 'Tuition Fee'),
+#         ('development', 'Development Fee'),
+#         ('exam', 'Examination Fee'),
+#         ('sport', 'Sports Fee'),
+#         ('transport', 'Transport Fee'),
+#         ('uniform', 'Uniform Fee'),
+#         ('book', 'Book Fee'),
+#         ('meal', 'Meal Fee'),
+#         ('other', 'Other Fee'),
+#     )
+
+#     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='fee_structures')
+#     session = models.ForeignKey(AcademicSession, on_delete=models.CASCADE, related_name='fee_structures')
+#     class_level = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='fee_structures')
+#     fee_type = models.CharField(max_length=20, choices=FEE_TYPES)
+#     amount = models.DecimalField(max_digits=10, decimal_places=2)
+#     is_mandatory = models.BooleanField(default=True)
+#     due_date = models.DateField(blank=True, null=True)
+#     description = models.TextField(blank=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
+
+#     class Meta:
+#         db_table = 'fee_structures'
+#         unique_together = ['school', 'session', 'class_level', 'fee_type']
+
+#     def __str__(self):
+#         return f"{self.school.name} - {self.class_level.name} - {self.get_fee_type_display()}: ₦{self.amount}"
 
 
-class FeePayment(models.Model):
-    PAYMENT_STATUS = (
-        ('pending', 'Pending'),
-        ('partial', 'Partial'),
-        ('completed', 'Completed'),
-        ('overdue', 'Overdue'),
-        ('cancelled', 'Cancelled'),
-    )
-    
-    PAYMENT_METHODS = (
-        ('cash', 'Cash'),
-        ('bank_transfer', 'Bank Transfer'),
-        ('card', 'Card Payment'),
-        ('mobile_money', 'Mobile Money'),
-        ('cheque', 'Cheque'),
-    )
-    
-    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='fee_payments')
-    fee_structure = models.ForeignKey(FeeStructure, on_delete=models.CASCADE, related_name='payments')
-    amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_date = models.DateTimeField(auto_now_add=True)
-    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
-    reference_number = models.CharField(max_length=100, unique=True)
-    status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='pending')
-    receipt_number = models.CharField(max_length=100, blank=True)
-    notes = models.TextField(blank=True)
-    recorded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='recorded_payments')
-    
-    class Meta:
-        db_table = 'fee_payments'
-        indexes = [
-            models.Index(fields=['student', 'payment_date']),
-            models.Index(fields=['reference_number']),
-            models.Index(fields=['status']),
-        ]
-    
-    def __str__(self):
-        return f"{self.student.user.get_full_name()} - ₦{self.amount_paid} ({self.status})"
+# class FeePayment(models.Model):
+#     PAYMENT_STATUS = (
+#         ('pending', 'Pending'),
+#         ('partial', 'Partial'),
+#         ('completed', 'Completed'),
+#         ('overdue', 'Overdue'),
+#         ('cancelled', 'Cancelled'),
+#     )
+
+#     PAYMENT_METHODS = (
+#         ('cash', 'Cash'),
+#         ('bank_transfer', 'Bank Transfer'),
+#         ('card', 'Card Payment'),
+#         ('mobile_money', 'Mobile Money'),
+#         ('cheque', 'Cheque'),
+#     )
+
+#     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='fee_payments')
+#     fee_structure = models.ForeignKey(FeeStructure, on_delete=models.CASCADE, related_name='payments')
+#     amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
+#     payment_date = models.DateTimeField(auto_now_add=True)
+#     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
+#     reference_number = models.CharField(max_length=100, unique=True)
+#     status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='pending')
+#     receipt_number = models.CharField(max_length=100, blank=True)
+#     notes = models.TextField(blank=True)
+#     recorded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='recorded_payments')
+
+#     class Meta:
+#         db_table = 'fee_payments'
+#         indexes = [
+#             models.Index(fields=['student', 'payment_date']),
+#             models.Index(fields=['reference_number']),
+#             models.Index(fields=['status']),
+#         ]
+
+#     def __str__(self):
+#         return f"{self.student.user.get_full_name()} - ₦{self.amount_paid} ({self.status})"
 
 
 # Timetable and Schedule Models
